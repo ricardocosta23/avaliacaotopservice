@@ -145,7 +145,7 @@
                                 <!-- Hotel 1 (always show if hotel_1 exists) -->
                                 {% if survey.hotel_1 %}
                                 <div class="hotel-rating">
-                                    <label class="rating-label">{{ survey.hotel_1 }}:</label>
+                                    <label class="rating-label">{{ survey.hotel_1 }}</label>
                                     <div class="rating-scale-small">
                                         <div class="rating-numbers">
                                             {% for i in range(1, 11) %}
@@ -162,7 +162,7 @@
                                 <!-- Hotel 2 (only show if hotel_2 exists and is not blank) -->
                                 {% if survey.hotel_2 %}
                                 <div class="hotel-rating">
-                                    <label class="rating-label">{{ survey.hotel_2 }}:</label>
+                                    <label class="rating-label">{{ survey.hotel_2 }}</label>
                                     <div class="rating-scale-small">
                                         <div class="rating-numbers">
                                             {% for i in range(1, 11) %}
