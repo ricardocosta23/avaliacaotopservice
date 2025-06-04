@@ -1,0 +1,86 @@
+
+Messages
+JUN 03 14:16:14.86
+GET
+500
+avaliacaotop.vercel.app
+/favicon.ico
+Traceback (most recent call last): File "/var/task/vc__handler__python.py", line 213, in <module> if not issubclass(base, BaseHTTPRequestHandler): ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ TypeError: issubclass() arg 1 must be a class Python process exited with exit status: 1. The logs above can help with debugging the issue.
+JUN 03 14:16:13.49
+GET
+500
+avaliacaotop.vercel.app
+/
+Traceback (most recent call last): File "/var/task/vc__handler__python.py", line 213, in <module> if not issubclass(base, BaseHTTPRequestHandler): ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ TypeError: issubclass() arg 1 must be a class Python process exited with exit status: 1. The logs above can help with debugging the issue.
+JUN 03 14:16:08.36
+GET
+500
+avaliacaotop-geta90oqs-ricardos-projects-10b2b253.vercel.app
+/favicon.ico
+Traceback (most recent call last): File "/var/task/vc__handler__python.py", line 213, in <module> if not issubclass(base, BaseHTTPRequestHandler): ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ TypeError: issubclass() arg 1 must be a class Python process exited with exit status: 1. The logs above can help with debugging the issue.
+JUN 03 14:16:07.58
+GET
+500
+avaliacaotop-geta90oqs-ricardos-projects-10b2b253.vercel.app
+/favicon.ico
+Traceback (most recent call last): File "/var/task/vc__handler__python.py", line 213, in <module> if not issubclass(base, BaseHTTPRequestHandler): ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ TypeError: issubclass() arg 1 must be a class Python process exited with exit status: 1. The logs above can help with debugging the issue.
+JUN 03 14:16:07.46
+GET
+500
+avaliacaotop-geta90oqs-ricardos-projects-10b2b253.vercel.app
+/favicon.ico
+Traceback (most recent call last): File "/var/task/vc__handler__python.py", line 213, in <module> if not issubclass(base, BaseHTTPRequestHandler): ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ TypeError: issubclass() arg 1 must be a class Python process exited with exit status: 1. The logs above can help with debugging the issue.
+JUN 03 14:16:07.06
+GET
+500
+avaliacaotop-geta90oqs-ricardos-projects-10b2b253.vercel.app
+/
+Traceback (most recent call last): File "/var/task/vc__handler__python.py", line 213, in <module> if not issubclass(base, BaseHTTPRequestHandler): ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ TypeError: issubclass() arg 1 must be a class Python process exited with exit status: 1. The logs above can help with debugging the issue.
+JUN 03 14:16:06.43
+GET
+500
+avaliacaotop-geta90oqs-ricardos-projects-10b2b253.vercel.app
+/favicon.ico
+Traceback (most recent call last): File "/var/task/vc__handler__python.py", line 213, in <module> if not issubclass(base, BaseHTTPRequestHandler): ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ TypeError: issubclass() arg 1 must be a class Python process exited with exit status: 1. The logs above can help with debugging the issue.
+JUN 03 14:16:06.28
+GET
+500
+avaliacaotop-geta90oqs-ricardos-projects-10b2b253.vercel.app
+/
+Traceback (most recent call last): File "/var/task/vc__handler__python.py", line 213, in <module> if not issubclass(base, BaseHTTPRequestHandler): ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ TypeError: issubclass() arg 1 must be a class Python process exited with exit status: 1. The logs above can help with debugging the issue.
+JUN 03 14:16:05.35
+GET
+500
+avaliacaotop-geta90oqs-ricardos-projects-10b2b253.vercel.app
+/
+Traceback (most recent call last): File "/var/task/vc__handler__python.py", line 213, in <module> if not issubclass(base, BaseHTTPRequestHandler): ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ TypeError: issubclass() arg 1 must be a class Python process exited with exit status: 1. The logs above can help with debugging the issue.
+JUN 03 14:16:05.35
+GET
+500
+avaliacaotop-geta90oqs-ricardos-projects-10b2b253.vercel.app
+/
+Traceback (most recent call last): File "/var/task/vc__handler__python.py", line 213, in <module> if not issubclass(base, BaseHTTPRequestHandler): ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ TypeError: issubclass() arg 1 must be a class Python process exited with exit status: 1. The logs above can help with debugging the issue. Traceback (most recent call last): File "/var/task/vc__handler__python.py", line 213, in <module> if not issubclass(base, BaseHTTPRequestHandler): ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ TypeError: issubclass() arg 1 must be a class Python process exited with exit status: 1. The logs above can help with debugging the issue.
+JUN 03 14:16:05.18
+GET
+500
+avaliacaotop-geta90oqs-ricardos-projects-10b2b253.vercel.app
+/
+Traceback (most recent call last): File "/var/task/vc__handler__python.py", line 213, in <module> if not issubclass(base, BaseHTTPRequestHandler): ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ TypeError: issubclass() arg 1 must be a class Python process exited with exit status: 1. The logs above can help with debugging the issue.
+JUN 03 14:16:05.00
+GET
+500
+avaliacaotop-geta90oqs-ricardos-projects-10b2b253.vercel.app
+/
+Traceback (most recent call last): File "/var/task/vc__handler__python.py", line 213, in <module> if not issubclass(base, BaseHTTPRequestHandler): ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ TypeError: issubclass() arg 1 must be a class Python process exited with exit status: 1. The logs above can help with debugging the issue.
+JUN 03 14:16:03.08
+GET
+500
+avaliacaotop-geta90oqs-ricardos-projects-10b2b253.vercel.app
+/
+Traceback (most recent call last): File "/var/task/vc__handler__python.py", line 213, in <module> if not issubclass(base, BaseHTTPRequestHandler): ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ TypeError: issubclass() arg 1 must be a class Python process exited with exit status: 1. The logs above can help with debugging the issue. Traceback (most recent call last): File "/var/task/vc__handler__python.py", line 213, in <module> if not issubclass(base, BaseHTTPRequestHandler): ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ TypeError: issubclass() arg 1 must be a class Python process exited with exit status: 1. The logs above can help with debugging the issue.
+JUN 03 14:16:02.84
+GET
+500
+avaliacaotop-geta90oqs-ricardos-projects-10b2b253.vercel.app
+/
+Traceback (most recent call last): File "/var/task/vc__handler__python.py", line 213, in <module> if not issubclass(base, BaseHTTPRequestHandler): ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ TypeError: issubclass() arg 1 must be a class Python process exited with exit status: 1. The logs above can help with debugging the issue. Traceback (most recent call last): File "/var/task/vc__handler__python.py", line 213, in <module> if not issubclass(base, BaseHTTPRequestHandler): ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ TypeError: issubclass() arg 1 must be a class Python process exited with exit status: 1. The logs above can help with debugging the issue.
