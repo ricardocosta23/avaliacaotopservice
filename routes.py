@@ -631,6 +631,24 @@ def submit_survey(survey_id):
     """Handle survey submission"""
     survey = get_survey(survey_id)
 
+    # If not found in storage, try to reconstruct from Monday.com
+    if not survey:
+        # Check if this is a numeric Monday.com pulse ID
+        if survey_id.isdigit():
+            pulse_id = survey_id
+            survey = reconstruct_survey_from_monday(pulse_id)
+            if survey:
+                # Save reconstructed survey to memory for future requests
+                save_survey(survey_id, survey)
+        
+        # Handle legacy monday_ prefix format for backwards compatibility
+        elif survey_id.startswith('monday_'):
+            pulse_id = survey_id.replace('monday_', '')
+            survey = reconstruct_survey_from_monday(pulse_id)
+            if survey:
+                # Save reconstructed survey to memory for future requests
+                save_survey(survey_id, survey)
+
     if not survey:
         return "Pesquisa não encontrada", 404
 
