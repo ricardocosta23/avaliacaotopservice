@@ -433,45 +433,51 @@ def monday_webhook():
 
             # Generate PDF with QR code
             try:
+                print("Starting PDF generation...")
                 pdf_data = create_survey_pdf(surveys[survey_id], survey_url)
                 
-                # Create PDFs directory if it doesn't exist
-                pdfs_dir = os.path.join('static', 'pdfs')
-                os.makedirs(pdfs_dir, exist_ok=True)
-                
-                # Save PDF file temporarily
-                pdf_filename = f"pesquisa_{survey_id}.pdf"
-                pdf_path = os.path.join(pdfs_dir, pdf_filename)
-                
-                with open(pdf_path, 'wb') as f:
-                    f.write(pdf_data)
-                
-                print(f"PDF generated: {pdf_path}")
-                
-                # Upload PDF to Monday.com file column
-                try:
-                    upload_result = upload_file_to_monday(pulse_id, pdf_path)
-                    if 'errors' in upload_result:
-                        print(f"Error uploading PDF to Monday.com: {upload_result['errors']}")
-                        logging.error(f"Monday.com PDF upload error: {upload_result['errors']}")
-                    else:
-                        print("Successfully uploaded PDF to Monday.com")
-                        logging.info("Successfully uploaded PDF to Monday.com")
-                        
-                        # Delete the local PDF file after successful upload
-                        try:
-                            os.remove(pdf_path)
-                            print(f"Local PDF file deleted: {pdf_path}")
-                        except Exception as delete_error:
-                            print(f"Error deleting local PDF file: {str(delete_error)}")
+                if pdf_data and len(pdf_data) > 0:
+                    print(f"PDF generated successfully, size: {len(pdf_data)} bytes")
+                    
+                    # For Vercel serverless, use /tmp directory for temporary files
+                    import tempfile
+                    
+                    # Create temporary file for PDF
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_pdf:
+                        temp_pdf.write(pdf_data)
+                        temp_pdf_path = temp_pdf.name
+                    
+                    print(f"PDF saved to temporary path: {temp_pdf_path}")
+                    
+                    # Upload PDF to Monday.com file column
+                    try:
+                        upload_result = upload_file_to_monday(pulse_id, temp_pdf_path)
+                        if 'errors' in upload_result:
+                            print(f"Error uploading PDF to Monday.com: {upload_result['errors']}")
+                            logging.error(f"Monday.com PDF upload error: {upload_result['errors']}")
+                        else:
+                            print("Successfully uploaded PDF to Monday.com")
+                            logging.info("Successfully uploaded PDF to Monday.com")
                             
-                except Exception as upload_error:
-                    print(f"Exception when uploading PDF to Monday.com: {str(upload_error)}")
-                    logging.error(f"Exception when uploading PDF to Monday.com: {str(upload_error)}")
+                    except Exception as upload_error:
+                        print(f"Exception when uploading PDF to Monday.com: {str(upload_error)}")
+                        logging.error(f"Exception when uploading PDF to Monday.com: {str(upload_error)}")
+                    finally:
+                        # Always cleanup temporary file
+                        try:
+                            os.remove(temp_pdf_path)
+                            print(f"Temporary PDF file deleted: {temp_pdf_path}")
+                        except Exception as delete_error:
+                            print(f"Error deleting temporary PDF file: {str(delete_error)}")
+                else:
+                    print("PDF generation returned empty data")
+                    logging.error("PDF generation returned empty data")
                 
             except Exception as pdf_error:
                 print(f"Error generating PDF: {str(pdf_error)}")
                 logging.error(f"Error generating PDF: {str(pdf_error)}")
+                import traceback
+                traceback.print_exc()
 
             # Log the survey page link to console
             print(f"\n{'='*60}")
