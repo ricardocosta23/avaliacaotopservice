@@ -104,6 +104,96 @@ def get_item_data(item_id):
     result = monday_graphql_request(query, variables)
     return result
 
+def reconstruct_survey_from_monday(pulse_id):
+    """Reconstruct survey data from Monday.com API using pulse_id"""
+    try:
+        # Fetch item data from Monday.com
+        item_data_response = get_item_data(pulse_id)
+        
+        if 'errors' in item_data_response:
+            print(f"GraphQL error: {item_data_response['errors']}")
+            return None
+            
+        items = item_data_response.get('data', {}).get('items', [])
+        if not items:
+            return None
+            
+        item = items[0]
+        trip_name = item.get('name', 'Unknown Trip')
+        column_values = item.get('column_values', [])
+
+        # Extract data from columns (same logic as webhook)
+        location = "Unknown Location"
+        date = "Unknown Date"
+        company_name = "Unknown Company"
+        hotel_1 = None
+        hotel_2 = None
+        has_guides = False
+        formatted_date = "Data não disponível"
+        original_date = None
+        board_relation_value = None
+
+        for col in column_values:
+            if col['id'] == 'lookup_mkrjh91x':  # Destination column (mirror)
+                display_value = col.get('display_value')
+                if display_value:
+                    location = display_value
+                else:
+                    location = col.get('text') or col.get('value') or "Unknown Location"
+            elif col['id'] == 'lookup_mkrjpdz0':  # Date mirror column
+                display_value = col.get('display_value')
+                if display_value:
+                    formatted_date = format_date_portuguese(display_value)
+                    original_date = display_value
+                else:
+                    raw_date = col.get('text') or col.get('value')
+                    if raw_date:
+                        formatted_date = format_date_portuguese(raw_date)
+                        original_date = raw_date
+            elif col['id'] == 'lookup_mkrb9ns5':  # Mirror column lookup for company
+                display_value = col.get('display_value')
+                if display_value:
+                    company_name = display_value
+                else:
+                    company_name = col.get('text') or col.get('value') or "Unknown Company"
+            elif col['id'] == 'text_mkrj9z52':  # Hotel 1 column
+                hotel_1_text = col.get('text')
+                if hotel_1_text and hotel_1_text.strip():
+                    hotel_1 = hotel_1_text.strip()
+            elif col['id'] == 'text_mkrjz0tf':  # Hotel 2 column
+                hotel_2_text = col.get('text')
+                if hotel_2_text and hotel_2_text.strip():
+                    hotel_2 = hotel_2_text.strip()
+            elif col['id'] == 'color_mkrjt1p5':  # Guides column
+                guides_value = col.get('text')
+                has_guides = guides_value == "Sim"
+            elif col['id'] == 'board_relation_mkrbw0h7':  # Board relation column
+                board_relation_text = col.get('text')
+                if board_relation_text and board_relation_text.strip():
+                    board_relation_value = board_relation_text.strip()
+
+        # Use formatted date if available
+        if formatted_date != "Data não disponível":
+            date = formatted_date
+
+        return {
+            'survey_id': f"monday_{pulse_id}",  # Generate consistent ID from pulse_id
+            'location': location,
+            'date': date,
+            'trip_name': trip_name,
+            'company_name': company_name,
+            'pulse_id': pulse_id,
+            'hotel_1': hotel_1,
+            'hotel_2': hotel_2,
+            'has_guides': has_guides,
+            'original_date': original_date,
+            'board_relation_value': board_relation_value
+        }
+        
+    except Exception as e:
+        print(f"Error reconstructing survey from Monday.com: {str(e)}")
+        return None
+
 def update_survey_link(item_id, survey_url):
     """Update the link column with survey URL"""
     query = """
@@ -395,8 +485,8 @@ def monday_webhook():
                     date = "Unknown Date"
                     company_name = "Unknown Company"
 
-            # Generate unique survey ID
-            survey_id = str(uuid.uuid4())
+            # Generate consistent survey ID based on pulse_id
+            survey_id = f"monday_{pulse_id}"
 
             # Store survey data in database
             survey_data = {
@@ -512,6 +602,23 @@ def monday_webhook():
 def survey_form(survey_id):
     """Display the NPS survey form"""
     survey = get_survey(survey_id)
+
+    # If not found in storage, try to reconstruct from Monday.com
+    if not survey:
+        # Check if this is a Monday.com based survey ID
+        if survey_id.startswith('monday_'):
+            pulse_id = survey_id.replace('monday_', '')
+            survey = reconstruct_survey_from_monday(pulse_id)
+            if survey:
+                # Save reconstructed survey to memory for future requests
+                save_survey(survey_id, survey)
+        
+        # Also try to extract pulse_id from original survey format
+        elif len(survey_id) == 36:  # UUID format
+            # For backwards compatibility, we need to find the pulse_id
+            # This could be stored in Monday.com or we could extract from environment
+            # For now, we'll show an error but the survey might work if accessed via monday_ prefix
+            pass
 
     if not survey:
         return "Pesquisa não encontrada", 404
