@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', function() {
     // DOM elements
     const submitBtn = document.getElementById('submitBtn');
@@ -30,23 +31,19 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function selectRating(name, value, selectedElement) {
-        // Always use direct name mapping to hidden inputs
+        // Find or create the hidden input
         let hiddenInput = document.querySelector(`input[name="${name}"]`);
         
-        if (hiddenInput) {
-            hiddenInput.value = value;
-            console.log(`Set ${name} to ${value}`);
-        } else {
-            console.error(`Hidden input not found for ${name}`);
-            
-            // Create hidden input if it doesn't exist
+        if (!hiddenInput) {
+            console.log(`Creating hidden input for ${name}`);
             hiddenInput = document.createElement('input');
             hiddenInput.type = 'hidden';
             hiddenInput.name = name;
-            hiddenInput.value = value;
-            selectedElement.closest('form').appendChild(hiddenInput);
-            console.log(`Created and set ${name} to ${value}`);
+            surveyForm.appendChild(hiddenInput);
         }
+        
+        hiddenInput.value = value;
+        console.log(`Set ${name} to ${value}`);
 
         // Update visual state for this rating group
         const groupCircles = document.querySelectorAll(`[data-name="${name}"]`);
@@ -56,7 +53,8 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedElement.classList.add('selected');
 
         // Hide error message if exists
-        const errorElement = document.getElementById(name + 'Error');
+        const errorElement = document.getElementById(name + 'Error') || 
+                           document.querySelector(`.rating-error[data-field="${name}"]`);
         if (errorElement) {
             errorElement.style.display = 'none';
         }
@@ -64,41 +62,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function validateForm() {
         let isValid = true;
+        
+        // Clear all previous errors
+        document.querySelectorAll('.rating-error').forEach(error => {
+            error.style.display = 'none';
+        });
 
         // Check overall rating (mandatory)
         const overallRatingInput = document.querySelector('input[name="overall_rating"]');
         const overallRating = overallRatingInput ? overallRatingInput.value : '';
-        const overallError = document.getElementById('overallRatingError') || document.querySelector('.rating-error');
 
-        console.log(`Overall rating validation: value="${overallRating}", input found: ${!!overallRatingInput}`);
+        console.log(`Overall rating validation: value="${overallRating}"`);
 
         if (!overallRating || overallRating.trim() === '') {
             console.log('Overall rating validation failed - no value');
-            if (overallError) {
-                overallError.style.display = 'block';
-                overallError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-            // Create error message if it doesn't exist
-            if (!overallError) {
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'rating-error';
-                errorDiv.style.color = 'red';
-                errorDiv.style.marginTop = '10px';
-                errorDiv.textContent = 'Por favor, avalie a viagem de forma geral';
-                const overallSection = document.querySelector('[data-name="overall_rating"]')?.closest('.question-section');
-                if (overallSection) {
-                    overallSection.appendChild(errorDiv);
-                }
-            }
+            showError('overall_rating', 'Por favor, avalie a viagem de forma geral');
             isValid = false;
-        } else {
-            console.log('Overall rating validation passed');
-            if (overallError) {
-                overallError.style.display = 'none';
-            }
         }
 
-        // Validate conditional questions - only if visible
+        // Validate conditional questions - only if visible and yes is selected
         if (!validateConditionalRating('used_air_travel', 'air_rating')) {
             isValid = false;
         }
@@ -130,6 +112,39 @@ document.addEventListener('DOMContentLoaded', function() {
         return isValid;
     }
 
+    function showError(fieldName, message) {
+        // Find existing error element or create one
+        let errorElement = document.getElementById(fieldName + 'Error') || 
+                          document.querySelector(`.rating-error[data-field="${fieldName}"]`);
+        
+        if (!errorElement) {
+            errorElement = document.createElement('div');
+            errorElement.className = 'rating-error';
+            errorElement.id = fieldName + 'Error';
+            errorElement.setAttribute('data-field', fieldName);
+            errorElement.style.color = 'red';
+            errorElement.style.marginTop = '10px';
+            errorElement.style.padding = '10px';
+            errorElement.style.backgroundColor = 'rgba(220, 53, 69, 0.1)';
+            errorElement.style.borderRadius = '5px';
+            
+            // Find the appropriate container to append the error
+            const ratingContainer = document.querySelector(`[data-name="${fieldName}"]`)?.closest('.question-section') ||
+                                  document.querySelector(`input[name="${fieldName}"]`)?.closest('.question-section');
+            
+            if (ratingContainer) {
+                ratingContainer.appendChild(errorElement);
+            } else {
+                // Fallback: append to form
+                surveyForm.appendChild(errorElement);
+            }
+        }
+        
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
     function validateConditionalRating(triggerName, ratingName) {
         const triggerYes = document.querySelector(`input[name="${triggerName}"][value="sim"]`);
         const ratingInput = document.querySelector(`input[name="${ratingName}"]`);
@@ -141,19 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (triggerYes && triggerYes.checked && conditionalContainer && 
             conditionalContainer.style.display !== 'none' && 
             ratingInput && !ratingInput.value) {
-            // Show error for conditional rating
-            let errorElement = document.getElementById(ratingName + 'Error');
-            if (!errorElement) {
-                errorElement = document.createElement('div');
-                errorElement.id = ratingName + 'Error';
-                errorElement.className = 'rating-error';
-                errorElement.style.color = 'red';
-                errorElement.style.marginTop = '10px';
-                errorElement.textContent = 'Por favor, avalie este item';
-                conditionalContainer.appendChild(errorElement);
-            }
-            errorElement.style.display = 'block';
-            errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            showError(ratingName, 'Por favor, avalie este item');
             return false;
         }
         return true;
@@ -167,19 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (ratingInput && hotelContainer && 
             hotelContainer.style.display !== 'none' && 
             !ratingInput.value) {
-            // Create error message if it doesn't exist
-            let errorElement = document.getElementById(ratingInputName + 'Error');
-            if (!errorElement) {
-                errorElement = document.createElement('div');
-                errorElement.id = ratingInputName + 'Error';
-                errorElement.className = 'rating-error';
-                errorElement.style.color = 'red';
-                errorElement.style.marginTop = '10px';
-                errorElement.textContent = 'Por favor, avalie este hotel';
-                hotelContainer.appendChild(errorElement);
-            }
-            errorElement.style.display = 'block';
-            errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            showError(ratingInputName, 'Por favor, avalie este hotel');
             return false;
         }
         return true;
@@ -204,15 +195,47 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log(`${key}: ${value}`);
             }
             
-            if (!validateForm()) {
-                console.log('Form validation failed, preventing submission');
-                e.preventDefault();
-                return false;
-            } else {
+            // Always prevent default first, then decide what to do
+            e.preventDefault();
+            
+            if (validateForm()) {
                 console.log('Form validation passed, submitting...');
                 showLoadingState();
-                // Let the form submit naturally
-                return true;
+                
+                // Submit the form programmatically
+                const form = e.target;
+                
+                // Create a new FormData object to ensure all data is captured
+                const submitData = new FormData(form);
+                
+                fetch(form.action, {
+                    method: 'POST',
+                    body: submitData
+                })
+                .then(response => {
+                    if (response.redirected) {
+                        // Follow the redirect
+                        window.location.href = response.url;
+                    } else if (response.ok) {
+                        // If successful but no redirect, manually redirect to thank you page
+                        const surveyId = window.location.pathname.split('/')[2];
+                        window.location.href = `/survey/${surveyId}/thank-you`;
+                    } else {
+                        throw new Error('Form submission failed');
+                    }
+                })
+                .catch(error => {
+                    console.error('Form submission error:', error);
+                    alert('Erro ao enviar formulário. Tente novamente.');
+                    // Reset button state
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Avaliação';
+                    }
+                });
+            } else {
+                console.log('Form validation failed');
+                // Form validation failed, errors are already shown
             }
         });
     }
