@@ -285,6 +285,11 @@ def update_board_with_lookup_value(item_name, lookup_value):
     
     if lookup_value:
         column_values["text_mkrkqj1g"] = lookup_value
+        print(f"=== BOARD 197599163 UPDATE DEBUG ===")
+        print(f"Item name: {item_name}")
+        print(f"Lookup value: {lookup_value}")
+        print(f"Column values JSON: {json.dumps(column_values)}")
+        print(f"=== END BOARD UPDATE DEBUG ===")
 
     variables = {
         "boardId": "197599163",
@@ -292,7 +297,9 @@ def update_board_with_lookup_value(item_name, lookup_value):
         "columnValues": json.dumps(column_values)
     }
 
+    print(f"Sending to Monday.com - Board ID: 197599163, Variables: {variables}")
     result = monday_graphql_request(query, variables)
+    print(f"Monday.com response for board 197599163: {result}")
     return result
 
 def create_survey_result_item(survey_data):
@@ -809,17 +816,22 @@ def submit_survey(survey_id):
             print(f"Successfully created Monday.com item: {created_item.get('id')}")
             
             # Update board 197599163 with lookup_mkrkwqep value if available
-            if survey.get('lookup_mkrkwqep_value'):
-                print(f"Updating board 197599163 with lookup value: {survey.get('lookup_mkrkwqep_value')}")
+            lookup_value = survey.get('lookup_mkrkwqep_value')
+            if lookup_value:
+                print(f"Updating board 197599163 with lookup value: {lookup_value}")
+                print(f"Trip name for board 197599163: {survey['trip_name']}")
                 lookup_result = update_board_with_lookup_value(
                     survey['trip_name'], 
-                    survey.get('lookup_mkrkwqep_value')
+                    lookup_value
                 )
                 if 'errors' in lookup_result:
                     print(f"Error updating board 197599163: {lookup_result['errors']}")
                 else:
                     lookup_item = lookup_result.get('data', {}).get('create_item', {})
                     print(f"Successfully created item on board 197599163: {lookup_item.get('id')}")
+                    print(f"Lookup value '{lookup_value}' sent to text_mkrkqj1g column")
+            else:
+                print("No lookup_mkrkwqep_value found in survey data")
             
             # Increment submission count
             increment_submission_count(survey_id)
