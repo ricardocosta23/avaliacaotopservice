@@ -601,6 +601,10 @@ def monday_webhook():
 @app.route('/survey/<survey_id>')
 def survey_form(survey_id):
     """Display the NPS survey form"""
+    # Clear any existing flash messages when accessing the survey form
+    from flask import session
+    session.pop('_flashes', None)
+    
     survey = get_survey(survey_id)
 
     # If not found in storage, try to reconstruct from Monday.com
