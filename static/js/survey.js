@@ -30,34 +30,22 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function selectRating(name, value, selectedElement) {
-        // Update hidden input with proper mapping
-        let hiddenInput;
-        const inputMap = {
-            'overall_rating': 'overallRating',
-            'air_rating': 'airRating',
-            'guides_rating': 'guidesRating',
-            'hotel_1_rating': 'hotel1Rating',
-            'hotel_2_rating': 'hotel2Rating',
-            'restaurants_rating': 'restaurantsRating',
-            'activities_rating': 'activitiesRating'
-        };
-
-        const inputId = inputMap[name];
-        if (inputId) {
-            hiddenInput = document.getElementById(inputId);
-            if (hiddenInput) {
-                hiddenInput.value = value;
-                console.log(`Set ${name} to ${value}`); // Debug log
-            } else {
-                console.error(`Hidden input not found for ${name} (${inputId})`);
-            }
+        // Always use direct name mapping to hidden inputs
+        let hiddenInput = document.querySelector(`input[name="${name}"]`);
+        
+        if (hiddenInput) {
+            hiddenInput.value = value;
+            console.log(`Set ${name} to ${value}`);
         } else {
-            // Direct mapping fallback
-            hiddenInput = document.querySelector(`input[name="${name}"]`);
-            if (hiddenInput) {
-                hiddenInput.value = value;
-                console.log(`Set ${name} to ${value} (direct mapping)`);
-            }
+            console.error(`Hidden input not found for ${name}`);
+            
+            // Create hidden input if it doesn't exist
+            hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = name;
+            hiddenInput.value = value;
+            selectedElement.closest('form').appendChild(hiddenInput);
+            console.log(`Created and set ${name} to ${value}`);
         }
 
         // Update visual state for this rating group
@@ -78,9 +66,9 @@ document.addEventListener('DOMContentLoaded', function() {
         let isValid = true;
 
         // Check overall rating (mandatory)
-        const overallRatingInput = document.getElementById('overallRating') || document.querySelector('input[name="overall_rating"]');
+        const overallRatingInput = document.querySelector('input[name="overall_rating"]');
         const overallRating = overallRatingInput ? overallRatingInput.value : '';
-        const overallError = document.getElementById('overallRatingError');
+        const overallError = document.getElementById('overallRatingError') || document.querySelector('.rating-error');
 
         console.log(`Overall rating validation: value="${overallRating}", input found: ${!!overallRatingInput}`);
 
@@ -89,6 +77,18 @@ document.addEventListener('DOMContentLoaded', function() {
             if (overallError) {
                 overallError.style.display = 'block';
                 overallError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            // Create error message if it doesn't exist
+            if (!overallError) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'rating-error';
+                errorDiv.style.color = 'red';
+                errorDiv.style.marginTop = '10px';
+                errorDiv.textContent = 'Por favor, avalie a viagem de forma geral';
+                const overallSection = document.querySelector('[data-name="overall_rating"]')?.closest('.question-section');
+                if (overallSection) {
+                    overallSection.appendChild(errorDiv);
+                }
             }
             isValid = false;
         } else {
@@ -117,13 +117,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Validate hotel ratings - only if hotel containers exist and are visible
-        const hotel1Input = document.getElementById('hotel1Rating');
-        if (hotel1Input && !validateHotelRating('hotel1Rating')) {
+        const hotel1Input = document.querySelector('input[name="hotel_1_rating"]');
+        if (hotel1Input && !validateHotelRating('hotel_1_rating')) {
             isValid = false;
         }
         
-        const hotel2Input = document.getElementById('hotel2Rating');
-        if (hotel2Input && !validateHotelRating('hotel2Rating')) {
+        const hotel2Input = document.querySelector('input[name="hotel_2_rating"]');
+        if (hotel2Input && !validateHotelRating('hotel_2_rating')) {
             isValid = false;
         }
 
@@ -132,8 +132,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function validateConditionalRating(triggerName, ratingName) {
         const triggerYes = document.querySelector(`input[name="${triggerName}"][value="sim"]`);
-        const ratingInput = document.getElementById(ratingName.replace('_', '') + 'Rating') || 
-                           document.getElementById(ratingName.charAt(0).toLowerCase() + ratingName.slice(1).replace('_', '') + 'Rating');
+        const ratingInput = document.querySelector(`input[name="${ratingName}"]`);
         
         // Get the conditional question container
         const conditionalContainer = document.getElementById(ratingName.replace('_', '-'));
@@ -143,18 +142,25 @@ document.addEventListener('DOMContentLoaded', function() {
             conditionalContainer.style.display !== 'none' && 
             ratingInput && !ratingInput.value) {
             // Show error for conditional rating
-            const errorElement = document.getElementById(ratingName + 'Error');
-            if (errorElement) {
-                errorElement.style.display = 'block';
-                errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            let errorElement = document.getElementById(ratingName + 'Error');
+            if (!errorElement) {
+                errorElement = document.createElement('div');
+                errorElement.id = ratingName + 'Error';
+                errorElement.className = 'rating-error';
+                errorElement.style.color = 'red';
+                errorElement.style.marginTop = '10px';
+                errorElement.textContent = 'Por favor, avalie este item';
+                conditionalContainer.appendChild(errorElement);
             }
+            errorElement.style.display = 'block';
+            errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return false;
         }
         return true;
     }
 
-    function validateHotelRating(ratingInputId) {
-        const ratingInput = document.getElementById(ratingInputId);
+    function validateHotelRating(ratingInputName) {
+        const ratingInput = document.querySelector(`input[name="${ratingInputName}"]`);
         const hotelContainer = ratingInput ? ratingInput.closest('.hotel-rating') : null;
         
         // Only validate if the hotel container exists, is visible, and has no rating
@@ -162,14 +168,15 @@ document.addEventListener('DOMContentLoaded', function() {
             hotelContainer.style.display !== 'none' && 
             !ratingInput.value) {
             // Create error message if it doesn't exist
-            let errorElement = document.getElementById(ratingInputId + 'Error');
+            let errorElement = document.getElementById(ratingInputName + 'Error');
             if (!errorElement) {
                 errorElement = document.createElement('div');
-                errorElement.id = ratingInputId + 'Error';
+                errorElement.id = ratingInputName + 'Error';
                 errorElement.className = 'rating-error';
-                errorElement.style.display = 'none';
+                errorElement.style.color = 'red';
+                errorElement.style.marginTop = '10px';
                 errorElement.textContent = 'Por favor, avalie este hotel';
-                ratingInput.parentNode.appendChild(errorElement);
+                hotelContainer.appendChild(errorElement);
             }
             errorElement.style.display = 'block';
             errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
