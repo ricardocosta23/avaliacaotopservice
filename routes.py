@@ -177,7 +177,7 @@ def reconstruct_survey_from_monday(pulse_id):
             date = formatted_date
 
         return {
-            'survey_id': f"monday_{pulse_id}",  # Generate consistent ID from pulse_id
+            'survey_id': str(pulse_id),  # Generate consistent ID from pulse_id (numeric only)
             'location': location,
             'date': date,
             'trip_name': trip_name,
@@ -485,8 +485,8 @@ def monday_webhook():
                     date = "Unknown Date"
                     company_name = "Unknown Company"
 
-            # Generate consistent survey ID based on pulse_id
-            survey_id = f"monday_{pulse_id}"
+            # Generate consistent survey ID based on pulse_id (just the number)
+            survey_id = str(pulse_id)
 
             # Store survey data in database
             survey_data = {
@@ -605,20 +605,21 @@ def survey_form(survey_id):
 
     # If not found in storage, try to reconstruct from Monday.com
     if not survey:
-        # Check if this is a Monday.com based survey ID
-        if survey_id.startswith('monday_'):
-            pulse_id = survey_id.replace('monday_', '')
+        # Check if this is a numeric Monday.com pulse ID
+        if survey_id.isdigit():
+            pulse_id = survey_id
             survey = reconstruct_survey_from_monday(pulse_id)
             if survey:
                 # Save reconstructed survey to memory for future requests
                 save_survey(survey_id, survey)
         
-        # Also try to extract pulse_id from original survey format
-        elif len(survey_id) == 36:  # UUID format
-            # For backwards compatibility, we need to find the pulse_id
-            # This could be stored in Monday.com or we could extract from environment
-            # For now, we'll show an error but the survey might work if accessed via monday_ prefix
-            pass
+        # Handle legacy monday_ prefix format for backwards compatibility
+        elif survey_id.startswith('monday_'):
+            pulse_id = survey_id.replace('monday_', '')
+            survey = reconstruct_survey_from_monday(pulse_id)
+            if survey:
+                # Save reconstructed survey to memory for future requests
+                save_survey(survey_id, survey)
 
     if not survey:
         return "Pesquisa não encontrada", 404
