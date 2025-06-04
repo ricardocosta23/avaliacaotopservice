@@ -962,6 +962,11 @@ def list_surveys():
     
     return html
 
+@app.route('/favicon.ico')
+def favicon():
+    """Return favicon to prevent 404 errors"""
+    return send_file('static/images/company-logo.png', mimetype='image/png')
+
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template('thank_you.html', survey=None, error="Página não encontrada"), 404
