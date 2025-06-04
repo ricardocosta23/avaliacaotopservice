@@ -6,16 +6,19 @@ from datetime import datetime
 from flask import request, render_template, redirect, url_for, jsonify, flash, send_file
 from app import app
 from pdf_generator import create_survey_pdf
+from database import init_database, save_survey, get_survey, increment_submission_count, get_all_surveys
 import os
 from io import BytesIO
+
+# Initialize database on startup
+init_database()
 
 # Monday.com API configuration
 MONDAY_API_URL = "https://api.monday.com/v2"
 MONDAY_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjQxMDM1MDMyNiwiYWFpIjoxMSwidWlkIjo1NTIyMDQ0LCJpYWQiOiIyMDI0LTA5LTEzVDExOjUyOjQzLjAwMFoiLCJwZXIiOiJtZTp3cml0ZSIsImFjdGlkIjozNzk1MywicmduIjoidXNlMSJ9.hwTlwMwtbhKdZsYcGT7UoENBLZUAxnfUXchj5RZJBz4"
 BOARD_ID = "9241811459"
 
-# In-memory storage for survey data (temporary until submitted to Monday.com)
-surveys = {}
+# Note: Survey data is now stored persistently in SQLite database
 
 def format_date_portuguese(date_str):
     """Format date string to Portuguese format (e.g., 'Maio de 2025')"""
@@ -395,8 +398,8 @@ def monday_webhook():
             # Generate unique survey ID
             survey_id = str(uuid.uuid4())
 
-            # Store survey data in memory
-            surveys[survey_id] = {
+            # Store survey data in database
+            survey_data = {
                 'survey_id': survey_id,
                 'location': location,
                 'date': date,
@@ -409,6 +412,7 @@ def monday_webhook():
                 'original_date': original_date,  # Original date for Monday.com registration
                 'board_relation_value': board_relation_value  # Board relation value
             }
+            save_survey(survey_id, survey_data)
 
             # Generate survey URL
             survey_url = url_for('survey_form', survey_id=survey_id, _external=True)
@@ -434,7 +438,7 @@ def monday_webhook():
             # Generate PDF with QR code
             try:
                 print("Starting PDF generation...")
-                pdf_data = create_survey_pdf(surveys[survey_id], survey_url)
+                pdf_data = create_survey_pdf(survey_data, survey_url)
                 
                 if pdf_data and len(pdf_data) > 0:
                     print(f"PDF generated successfully, size: {len(pdf_data)} bytes")
@@ -507,7 +511,7 @@ def monday_webhook():
 @app.route('/survey/<survey_id>')
 def survey_form(survey_id):
     """Display the NPS survey form"""
-    survey = surveys.get(survey_id)
+    survey = get_survey(survey_id)
 
     if not survey:
         return "Pesquisa não encontrada", 404
@@ -517,7 +521,7 @@ def survey_form(survey_id):
 @app.route('/survey/<survey_id>/submit', methods=['POST'])
 def submit_survey(survey_id):
     """Handle survey submission"""
-    survey = surveys.get(survey_id)
+    survey = get_survey(survey_id)
 
     if not survey:
         return "Pesquisa não encontrada", 404
@@ -607,6 +611,9 @@ def submit_survey(survey_id):
         else:
             created_item = monday_result.get('data', {}).get('create_item', {})
             print(f"Successfully created Monday.com item: {created_item.get('id')}")
+            
+            # Increment submission count
+            increment_submission_count(survey_id)
 
         # Log completion to console
         print(f"\n{'='*60}")
@@ -645,7 +652,7 @@ def submit_survey(survey_id):
 @app.route('/survey/<survey_id>/thank-you')
 def thank_you(survey_id):
     """Display thank you page"""
-    survey = surveys.get(survey_id)
+    survey = get_survey(survey_id)
 
     if not survey:
         return "Pesquisa não encontrada", 404
@@ -655,7 +662,7 @@ def thank_you(survey_id):
 @app.route('/survey/<survey_id>/pdf')
 def download_pdf(survey_id):
     """Download the PDF with QR code for the survey"""
-    survey = surveys.get(survey_id)
+    survey = get_survey(survey_id)
     
     if not survey:
         return "Pesquisa não encontrada", 404
@@ -709,6 +716,21 @@ def index():
             }
             h1 { font-size: 3em; margin-bottom: 20px; }
             p { font-size: 1.2em; opacity: 0.9; }
+            .btn {
+                display: inline-block;
+                padding: 12px 24px;
+                margin: 10px;
+                background: rgba(255, 255, 255, 0.2);
+                color: white;
+                text-decoration: none;
+                border-radius: 10px;
+                font-weight: 600;
+                transition: all 0.3s ease;
+            }
+            .btn:hover {
+                background: rgba(255, 255, 255, 0.3);
+                transform: translateY(-2px);
+            }
         </style>
     </head>
     <body>
@@ -716,10 +738,101 @@ def index():
             <h1>🌍 Sistema de Pesquisa NPS de Viagem</h1>
             <p>Endpoint webhook pronto para receber dados do Monday.com</p>
             <p>Pesquisas serão geradas automaticamente quando webhooks forem recebidos</p>
+            <br>
+            <a href="/surveys" class="btn">Ver Todas as Pesquisas</a>
         </div>
     </body>
     </html>
     """
+
+@app.route('/surveys')
+def list_surveys():
+    """List all surveys"""
+    surveys = get_all_surveys()
+    
+    html = """
+    <html>
+    <head>
+        <title>Todas as Pesquisas</title>
+        <style>
+            body { 
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 20px;
+                margin: 0;
+                min-height: 100vh;
+            }
+            .container { max-width: 1200px; margin: 0 auto; }
+            h1 { text-align: center; margin-bottom: 30px; }
+            .survey-card {
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(10px);
+                border-radius: 15px;
+                padding: 20px;
+                margin: 15px 0;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            }
+            .survey-title { font-size: 1.5em; margin-bottom: 10px; color: #fff; }
+            .survey-info { margin: 5px 0; opacity: 0.9; }
+            .survey-actions { margin-top: 15px; }
+            .btn {
+                display: inline-block;
+                padding: 8px 16px;
+                margin: 5px;
+                background: rgba(255, 255, 255, 0.2);
+                color: white;
+                text-decoration: none;
+                border-radius: 8px;
+                font-weight: 600;
+                transition: all 0.3s ease;
+            }
+            .btn:hover {
+                background: rgba(255, 255, 255, 0.3);
+                transform: translateY(-1px);
+            }
+            .submissions-count {
+                background: rgba(0, 255, 0, 0.2);
+                padding: 4px 8px;
+                border-radius: 12px;
+                font-size: 0.9em;
+                margin-left: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>📋 Todas as Pesquisas Criadas</h1>
+    """
+    
+    for survey in surveys:
+        html += f"""
+            <div class="survey-card">
+                <div class="survey-title">
+                    {survey['trip_name']}
+                    <span class="submissions-count">{survey['submission_count']} respostas</span>
+                </div>
+                <div class="survey-info">📍 <strong>Destino:</strong> {survey['location']}</div>
+                <div class="survey-info">📅 <strong>Data:</strong> {survey['date']}</div>
+                <div class="survey-info">🏢 <strong>Empresa:</strong> {survey['company_name']}</div>
+                <div class="survey-info">🕒 <strong>Criado em:</strong> {survey['created_at']}</div>
+                <div class="survey-actions">
+                    <a href="/survey/{survey['survey_id']}" class="btn">Abrir Pesquisa</a>
+                    <a href="/survey/{survey['survey_id']}/pdf" class="btn">Download PDF</a>
+                </div>
+            </div>
+        """
+    
+    html += """
+            <div style="text-align: center; margin-top: 30px;">
+                <a href="/" class="btn">Voltar ao Início</a>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    return html
 
 @app.errorhandler(404)
 def not_found_error(error):
