@@ -762,9 +762,25 @@ def thank_you(survey_id):
     """Display thank you page"""
     survey = get_survey(survey_id)
 
+    # If not found in storage, try to reconstruct from Monday.com
     if not survey:
-        return "Pesquisa não encontrada", 404
+        # Check if this is a numeric Monday.com pulse ID
+        if survey_id.isdigit():
+            pulse_id = survey_id
+            survey = reconstruct_survey_from_monday(pulse_id)
+            if survey:
+                # Save reconstructed survey to memory for future requests
+                save_survey(survey_id, survey)
+        
+        # Handle legacy monday_ prefix format for backwards compatibility
+        elif survey_id.startswith('monday_'):
+            pulse_id = survey_id.replace('monday_', '')
+            survey = reconstruct_survey_from_monday(pulse_id)
+            if survey:
+                # Save reconstructed survey to memory for future requests
+                save_survey(survey_id, survey)
 
+    # If still no survey found, show thank you page without survey details
     return render_template('thank_you.html', survey=survey)
 
 @app.route('/survey/<survey_id>/pdf')
