@@ -668,14 +668,18 @@ def submit_survey(survey_id):
         had_restaurants = request.form.get('had_restaurants')
         had_activities = request.form.get('had_activities')
 
+        # Debug: Print form data
+        print(f"Form data received: {dict(request.form)}")
+        print(f"Overall rating value: '{overall_rating}' (type: {type(overall_rating)})")
+
         # Validate overall rating (mandatory)
         if not overall_rating:
             flash("Por favor, avalie a viagem de forma geral.", "error")
-            return redirect(url_for('survey_form', survey_id=survey_id))
+            return redirect(f'/survey/{survey_id}')
 
         if overall_rating < 1 or overall_rating > 10:
             flash("Por favor, selecione uma avaliação válida entre 1 e 10.", "error")
-            return redirect(url_for('survey_form', survey_id=survey_id))
+            return redirect(f'/survey/{survey_id}')
 
         # Create new item in Monday.com with survey results
         print(f"Creating Monday.com item for survey results")
@@ -751,11 +755,11 @@ def submit_survey(survey_id):
 
     except (ValueError, TypeError):
         flash("Por favor, selecione uma avaliação válida.", "error")
-        return redirect(url_for('survey_form', survey_id=survey_id))
+        return redirect(f'/survey/{survey_id}')
     except Exception as e:
         logging.error(f"Error submitting survey: {str(e)}")
         flash("Ocorreu um erro ao enviar sua resposta. Por favor, tente novamente.", "error")
-        return redirect(url_for('survey_form', survey_id=survey_id))
+        return redirect(f'/survey/{survey_id}')
 
 @app.route('/survey/<survey_id>/thank-you')
 def thank_you(survey_id):
