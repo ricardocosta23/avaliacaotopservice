@@ -132,6 +132,7 @@ def reconstruct_survey_from_monday(pulse_id):
         formatted_date = "Data não disponível"
         original_date = None
         board_relation_value = None
+        lookup_mkrkwqep_value = None
 
         for col in column_values:
             if col['id'] == 'lookup_mkrjh91x':  # Destination column (mirror)
@@ -171,6 +172,12 @@ def reconstruct_survey_from_monday(pulse_id):
                 board_relation_text = col.get('text')
                 if board_relation_text and board_relation_text.strip():
                     board_relation_value = board_relation_text.strip()
+            elif col['id'] == 'lookup_mkrkwqep':  # Mirror column lookup_mkrkwqep
+                display_value = col.get('display_value')
+                if display_value:
+                    lookup_mkrkwqep_value = display_value
+                else:
+                    lookup_mkrkwqep_value = col.get('text') or col.get('value') or None
 
         # Use formatted date if available
         if formatted_date != "Data não disponível":
@@ -187,7 +194,8 @@ def reconstruct_survey_from_monday(pulse_id):
             'hotel_2': hotel_2,
             'has_guides': has_guides,
             'original_date': original_date,
-            'board_relation_value': board_relation_value
+            'board_relation_value': board_relation_value,
+            'lookup_mkrkwqep_value': lookup_mkrkwqep_value
         }
         
     except Exception as e:
@@ -249,6 +257,36 @@ def upload_file_to_monday(item_id, file_path, column_id="file_mkrk1fcz"):
     except Exception as e:
         print(f"Error uploading file to Monday.com: {str(e)}")
         return {"errors": [str(e)]}
+
+def update_board_with_lookup_value(item_name, lookup_value):
+    """Create item on board 197599163 with lookup_mkrkwqep value in text_mkrkqj1g column"""
+    query = """
+    mutation($boardId: ID!, $itemName: String!, $columnValues: JSON!) {
+        create_item(
+            board_id: $boardId,
+            item_name: $itemName,
+            column_values: $columnValues
+        ) {
+            id
+            name
+        }
+    }
+    """
+
+    # Build column values with lookup_mkrkwqep value
+    column_values = {}
+    
+    if lookup_value:
+        column_values["text_mkrkqj1g"] = lookup_value
+
+    variables = {
+        "boardId": "197599163",
+        "itemName": item_name,
+        "columnValues": json.dumps(column_values)
+    }
+
+    result = monday_graphql_request(query, variables)
+    return result
 
 def create_survey_result_item(survey_data):
     """Create a new item with survey results"""
@@ -414,6 +452,7 @@ def monday_webhook():
                     formatted_date = "Data não disponível"
                     original_date = None  # Store original date for Monday.com registration
                     board_relation_value = None  # Store board relation value
+                    lookup_mkrkwqep_value = None  # Store mirror column lookup_mkrkwqep value
 
                     for col in column_values:
                         print(f"Column ID: {col['id']}, Text: {col.get('text')}, Value: {col.get('value')}")
@@ -471,6 +510,13 @@ def monday_webhook():
                             if board_relation_text and board_relation_text.strip():
                                 board_relation_value = board_relation_text.strip()
                             print(f"Board relation: {board_relation_value}")
+                        elif col['id'] == 'lookup_mkrkwqep':  # Mirror column lookup_mkrkwqep
+                            display_value = col.get('display_value')
+                            if display_value:
+                                lookup_mkrkwqep_value = display_value
+                            else:
+                                lookup_mkrkwqep_value = col.get('text') or col.get('value') or None
+                            print(f"Mirror column lookup_mkrkwqep: {lookup_mkrkwqep_value}")
 
                     # Use formatted date if available, otherwise fallback to original date
                     if formatted_date != "Data não disponível":
@@ -500,7 +546,8 @@ def monday_webhook():
                 'hotel_2': hotel_2,  # Hotel name from Monday.com (if not blank)
                 'has_guides': has_guides,  # Whether to show guides section
                 'original_date': original_date,  # Original date for Monday.com registration
-                'board_relation_value': board_relation_value  # Board relation value
+                'board_relation_value': board_relation_value,  # Board relation value
+                'lookup_mkrkwqep_value': lookup_mkrkwqep_value  # Mirror column lookup_mkrkwqep value
             }
             save_survey(survey_id, survey_data)
 
@@ -719,6 +766,7 @@ def submit_survey(survey_id):
             'company_name': survey['company_name'],
             'original_date': survey.get('original_date'),
             'board_relation_value': survey.get('board_relation_value'),
+            'lookup_mkrkwqep_value': survey.get('lookup_mkrkwqep_value'),
             'overall_rating': overall_rating,
             'air_rating': air_rating,
             'guides_rating': guides_rating,
@@ -745,6 +793,19 @@ def submit_survey(survey_id):
         else:
             created_item = monday_result.get('data', {}).get('create_item', {})
             print(f"Successfully created Monday.com item: {created_item.get('id')}")
+            
+            # Update board 197599163 with lookup_mkrkwqep value if available
+            if survey.get('lookup_mkrkwqep_value'):
+                print(f"Updating board 197599163 with lookup value: {survey.get('lookup_mkrkwqep_value')}")
+                lookup_result = update_board_with_lookup_value(
+                    survey['trip_name'], 
+                    survey.get('lookup_mkrkwqep_value')
+                )
+                if 'errors' in lookup_result:
+                    print(f"Error updating board 197599163: {lookup_result['errors']}")
+                else:
+                    lookup_item = lookup_result.get('data', {}).get('create_item', {})
+                    print(f"Successfully created item on board 197599163: {lookup_item.get('id')}")
             
             # Increment submission count
             increment_submission_count(survey_id)
