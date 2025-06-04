@@ -1,88 +1,42 @@
 
-import sqlite3
 import json
-import os
 from datetime import datetime
 
-DATABASE_PATH = 'surveys.db'
+# In-memory storage for Vercel serverless compatibility
+surveys_storage = {}
 
 def init_database():
-    """Initialize the database with surveys table"""
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-    
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS surveys (
-            survey_id TEXT PRIMARY KEY,
-            survey_data TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            submission_count INTEGER DEFAULT 0
-        )
-    ''')
-    
-    conn.commit()
-    conn.close()
+    """Initialize in-memory storage - no action needed for Vercel"""
+    pass
 
 def save_survey(survey_id, survey_data):
-    """Save survey data to database"""
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-    
-    cursor.execute('''
-        INSERT OR REPLACE INTO surveys (survey_id, survey_data, created_at)
-        VALUES (?, ?, ?)
-    ''', (survey_id, json.dumps(survey_data), datetime.now()))
-    
-    conn.commit()
-    conn.close()
+    """Save survey data to in-memory storage"""
+    surveys_storage[survey_id] = {
+        'survey_data': survey_data,
+        'created_at': datetime.now().isoformat(),
+        'submission_count': 0
+    }
 
 def get_survey(survey_id):
-    """Get survey data from database"""
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-    
-    cursor.execute('SELECT survey_data FROM surveys WHERE survey_id = ?', (survey_id,))
-    result = cursor.fetchone()
-    
-    conn.close()
-    
-    if result:
-        return json.loads(result[0])
+    """Get survey data from in-memory storage"""
+    if survey_id in surveys_storage:
+        return surveys_storage[survey_id]['survey_data']
     return None
 
 def increment_submission_count(survey_id):
     """Increment submission count for a survey"""
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-    
-    cursor.execute('''
-        UPDATE surveys 
-        SET submission_count = submission_count + 1 
-        WHERE survey_id = ?
-    ''', (survey_id,))
-    
-    conn.commit()
-    conn.close()
+    if survey_id in surveys_storage:
+        surveys_storage[survey_id]['submission_count'] += 1
 
 def get_all_surveys():
     """Get all surveys with their submission counts"""
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-    
-    cursor.execute('''
-        SELECT survey_id, survey_data, created_at, submission_count 
-        FROM surveys 
-        ORDER BY created_at DESC
-    ''')
-    
-    results = cursor.fetchall()
-    conn.close()
-    
     surveys = []
-    for row in results:
-        survey_data = json.loads(row[1])
-        survey_data['submission_count'] = row[3]
-        survey_data['created_at'] = row[2]
+    for survey_id, data in surveys_storage.items():
+        survey_data = data['survey_data'].copy()
+        survey_data['submission_count'] = data['submission_count']
+        survey_data['created_at'] = data['created_at']
         surveys.append(survey_data)
     
+    # Sort by creation date (most recent first)
+    surveys.sort(key=lambda x: x['created_at'], reverse=True)
     return surveys
