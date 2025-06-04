@@ -705,6 +705,10 @@ body {
 @media (max-width: 768px) {
     .survey-container {
         padding-top: 120px; /* Add more top padding to avoid logo overlap */
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     
     .survey-card,
@@ -757,6 +761,10 @@ body {
 @media (max-width: 480px) {
     .survey-container {
         padding-top: 140px; /* Even more top padding for smaller screens */
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     
     .rating-squares {
