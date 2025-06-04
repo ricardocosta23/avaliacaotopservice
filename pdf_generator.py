@@ -90,7 +90,7 @@ def create_survey_pdf(survey_data, survey_url):
     if os.path.exists(logo_path):
         try:
             # Simple logo sizing - fixed dimensions for reliability
-            logo = Image(logo_path, width=18*inch, height=3*inch)
+            logo = Image(logo_path, width=7.5*inch, height=1.248*inch)
             logo.hAlign = 'CENTER'
             elements.append(logo)
             elements.append(Spacer(1, 20))
