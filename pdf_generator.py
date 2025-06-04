@@ -14,24 +14,29 @@ from PIL import Image as PILImage # Import PIL for image dimension inspection
 
 def generate_qr_code(url):
     """Generate QR code for the survey URL"""
-    qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_L,
-        box_size=10,
-        border=4,
-    )
-    qr.add_data(url)
-    qr.make(fit=True)
+    try:
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(url)
+        qr.make(fit=True)
 
-    # Create QR code image
-    qr_img = qr.make_image(fill_color="black", back_color="white")
+        # Create QR code image
+        qr_img = qr.make_image(fill_color="black", back_color="white")
 
-    # Save to BytesIO
-    img_buffer = BytesIO()
-    qr_img.save(img_buffer, format='PNG')
-    img_buffer.seek(0)
+        # Save to BytesIO
+        img_buffer = BytesIO()
+        qr_img.save(img_buffer, format='PNG')
+        img_buffer.seek(0)
 
-    return img_buffer
+        return img_buffer
+    except Exception as e:
+        print(f"Error generating QR code: {e}")
+        # Return empty buffer if QR generation fails
+        return BytesIO()
 
 def create_survey_pdf(survey_data, survey_url):
     """Create a PDF with company logo and QR code for the survey"""
@@ -79,60 +84,19 @@ def create_survey_pdf(survey_data, survey_url):
         textColor=colors.HexColor('#2d3748')
     )
 
-    # Add company logo without a banner background
-    logo_path = os.path.join('static', 'images', 'pdfqr.png') # Using pdfqr.png as per your provided code
-
-    # Create a dummy logo file for testing if it doesn't exist
-    # In a real scenario, ensure 'static/images/pdfqr.png' exists
-    if not os.path.exists(logo_path):
-        os.makedirs(os.path.dirname(logo_path), exist_ok=True)
-        # Create a dummy image that is larger than the desired max dimensions
-        # to test the scaling down logic
-        dummy_img = PILImage.new('RGB', (800, 400), color = 'blue')
-        dummy_img.save(logo_path)
-        print(f"Created dummy logo at: {logo_path} for testing.")
-
+    # Add company logo - simplified for serverless environment
+    logo_path = os.path.join('static', 'images', 'pdfqr.png')
 
     if os.path.exists(logo_path):
         try:
-            # Get original image dimensions using PIL
-            pil_img = PILImage.open(logo_path)
-            original_width_px, original_height_px = pil_img.size
-            pil_img.close() # Close the image file after getting dimensions
-
-            # Define maximum desired dimensions for the logo in inches
-            # Adjust these values as needed for your desired logo size
-            max_logo_width_inch = 7.5 * inch
-            max_logo_height_inch = 4.5 * inch # A reasonable maximum height
-
-            # Convert pixel dimensions to points (ReportLab works in points, 1 inch = 72 points)
-            # Assuming a default DPI of 72 for pixel to point conversion if not explicitly known
-            original_width_pt = original_width_px * (inch / 72.0)
-            original_height_pt = original_height_px * (inch / 72.0)
-
-            # Calculate scaling factor to fit within max dimensions while maintaining aspect ratio
-            scale_factor = 1.0 # Default to no scaling
-
-            # Only scale down if the original image is larger than the maximum desired dimensions
-            if original_width_pt > max_logo_width_inch or original_height_pt > max_logo_height_inch:
-                width_ratio = max_logo_width_inch / original_width_pt
-                height_ratio = max_logo_height_inch / original_height_pt
-                scale_factor = min(width_ratio, height_ratio) # Use the smaller ratio to fit within both constraints
-
-            # Calculate the final scaled dimensions
-            scaled_width = original_width_pt * scale_factor
-            scaled_height = original_height_pt * scale_factor
-
-            # Create logo with calculated scaled dimensions
-            # ReportLab will use these precise dimensions, maintaining aspect ratio
-            logo = Image(logo_path, width=scaled_width, height=scaled_height)
-            logo.hAlign = 'CENTER' # Center the image horizontally
-
-            elements.append(logo) # Append the image directly
-            elements.append(Spacer(1, 20)) # Add a spacer after the logo
+            # Simple logo sizing - fixed dimensions for reliability
+            logo = Image(logo_path, width=6*inch, height=3*inch)
+            logo.hAlign = 'CENTER'
+            elements.append(logo)
+            elements.append(Spacer(1, 20))
         except Exception as e:
             print(f"Error adding logo: {e}")
-            pass  # Skip logo if there's an error loading it
+            # Continue without logo if there's an error
 
     # Add title
     title = Paragraph("Pesquisa de Experiência de Viagem", title_style)
@@ -162,19 +126,23 @@ def create_survey_pdf(survey_data, survey_url):
     elements.append(Spacer(1, 20))
 
     # Generate and add QR code
-    print(f"DEBUG: Survey URL provided: {survey_url}") # Debugging: Check the URL
     try:
         qr_buffer = generate_qr_code(survey_url)
-        print(f"DEBUG: QR buffer size: {qr_buffer.getbuffer().nbytes} bytes") # Debugging: Check buffer size
         if qr_buffer.getbuffer().nbytes > 0:
             qr_image = Image(qr_buffer, width=3*inch, height=3*inch)
             qr_image.hAlign = 'CENTER'
             elements.append(qr_image)
-            print("DEBUG: QR code image appended to elements.") # Debugging: Confirm append
+            print("QR code successfully added to PDF")
         else:
-            print("DEBUG: QR buffer is empty, QR code not generated.") # Debugging: Empty buffer
+            # Add placeholder text if QR code fails
+            qr_placeholder = Paragraph("QR Code não pôde ser gerado", subtitle_style)
+            elements.append(qr_placeholder)
+            print("QR code generation failed, added placeholder text")
     except Exception as e:
-        print(f"ERROR: Failed to generate or add QR code: {e}") # Debugging: Catch QR error
+        print(f"Error with QR code: {e}")
+        # Add placeholder text if QR code fails
+        qr_placeholder = Paragraph("QR Code não pôde ser gerado", subtitle_style)
+        elements.append(qr_placeholder)
 
     elements.append(Spacer(1, 20))
 
