@@ -703,6 +703,10 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .survey-container {
+        padding-top: 120px; /* Add more top padding to avoid logo overlap */
+    }
+    
     .survey-card,
     .thank-you-card {
         margin: var(--spacing-lg);
@@ -751,6 +755,10 @@ body {
 }
 
 @media (max-width: 480px) {
+    .survey-container {
+        padding-top: 140px; /* Even more top padding for smaller screens */
+    }
+    
     .rating-squares {
         justify-content: space-between;
         gap: 2px;
