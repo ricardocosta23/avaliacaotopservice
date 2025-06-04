@@ -4,7 +4,7 @@ import os
 
 # Add the parent directory to the Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-
+app = Flask(__name__)
 from app import app
 
 # Vercel expects the app to be exported directly
