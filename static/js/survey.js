@@ -51,6 +51,13 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 console.error(`Hidden input not found for ${name} (${inputId})`);
             }
+        } else {
+            // Direct mapping fallback
+            hiddenInput = document.querySelector(`input[name="${name}"]`);
+            if (hiddenInput) {
+                hiddenInput.value = value;
+                console.log(`Set ${name} to ${value} (direct mapping)`);
+            }
         }
 
         // Update visual state for this rating group
@@ -71,15 +78,21 @@ document.addEventListener('DOMContentLoaded', function() {
         let isValid = true;
 
         // Check overall rating (mandatory)
-        const overallRating = document.getElementById('overallRating').value;
+        const overallRatingInput = document.getElementById('overallRating') || document.querySelector('input[name="overall_rating"]');
+        const overallRating = overallRatingInput ? overallRatingInput.value : '';
         const overallError = document.getElementById('overallRatingError');
 
-        if (!overallRating) {
+        console.log(`Overall rating validation: value="${overallRating}", input found: ${!!overallRatingInput}`);
+
+        if (!overallRating || overallRating.trim() === '') {
+            console.log('Overall rating validation failed - no value');
             if (overallError) {
                 overallError.style.display = 'block';
+                overallError.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
             isValid = false;
         } else {
+            console.log('Overall rating validation passed');
             if (overallError) {
                 overallError.style.display = 'none';
             }
@@ -175,10 +188,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // Form submission handler
     if (surveyForm) {
         surveyForm.addEventListener('submit', function(e) {
+            console.log('Form submission attempted');
+            
+            // Get all form data for debugging
+            const formData = new FormData(surveyForm);
+            console.log('Form data before validation:');
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}: ${value}`);
+            }
+            
             if (!validateForm()) {
+                console.log('Form validation failed, preventing submission');
                 e.preventDefault();
+                return false;
             } else {
+                console.log('Form validation passed, submitting...');
                 showLoadingState();
+                // Let the form submit naturally
+                return true;
             }
         });
     }
