@@ -747,7 +747,7 @@ def submit_survey(survey_id):
         print(f"{'='*60}\n")
 
         flash("Obrigado pelo seu feedback!", "success")
-        return redirect(url_for('thank_you', survey_id=survey_id))
+        return redirect(f'/survey/{survey_id}/thank-you')
 
     except (ValueError, TypeError):
         flash("Por favor, selecione uma avaliação válida.", "error")
