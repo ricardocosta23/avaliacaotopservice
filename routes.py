@@ -178,6 +178,13 @@ def reconstruct_survey_from_monday(pulse_id):
                     lookup_mkrkwqep_value = display_value
                 else:
                     lookup_mkrkwqep_value = col.get('text') or col.get('value') or None
+                print(f"=== RECONSTRUCT DEBUG lookup_mkrkwqep ===")
+                print(f"Column ID: {col['id']}")
+                print(f"Display value: {display_value}")
+                print(f"Text value: {col.get('text')}")
+                print(f"Raw value: {col.get('value')}")
+                print(f"Final lookup_mkrkwqep_value: {lookup_mkrkwqep_value}")
+                print(f"=== END RECONSTRUCT DEBUG ===")
 
         # Use formatted date if available
         if formatted_date != "Data não disponível":
@@ -516,6 +523,13 @@ def monday_webhook():
                                 lookup_mkrkwqep_value = display_value
                             else:
                                 lookup_mkrkwqep_value = col.get('text') or col.get('value') or None
+                            print(f"=== DEBUG lookup_mkrkwqep ===")
+                            print(f"Column ID: {col['id']}")
+                            print(f"Display value: {display_value}")
+                            print(f"Text value: {col.get('text')}")
+                            print(f"Raw value: {col.get('value')}")
+                            print(f"Final lookup_mkrkwqep_value: {lookup_mkrkwqep_value}")
+                            print(f"=== END DEBUG ===")
                             print(f"Mirror column lookup_mkrkwqep: {lookup_mkrkwqep_value}")
 
                     # Use formatted date if available, otherwise fallback to original date
