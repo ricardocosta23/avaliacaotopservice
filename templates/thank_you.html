@@ -1,16 +1,20 @@
+
+<old_str>
+</old_str>
+<new_str>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Obrigado - Pesquisa de Viagem</title>
-
+    <title>Obrigado pelo seu feedback!</title>
+    
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
+    
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+    
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
@@ -20,58 +24,53 @@
         <img src="{{ url_for('static', filename='images/company-logo.png') }}" alt="Company Logo" class="company-logo">
     </div>
 
-    <div class="survey-container thank-you-container">
+    <div class="survey-container">
         <div class="container">
             <div class="row justify-content-center">
-                <div class="col-lg-6 col-xl-5">
-                    <div class="thank-you-card">
-                        {% if error %}
-                            <!-- Error State -->
-                            <div class="error-state">
-                                <div class="header-icons">
-                                    <div class="icon-wrapper error-icon">
-                                        <i class="fas fa-exclamation-triangle"></i>
-                                    </div>
+                <div class="col-lg-8 col-xl-6">
+                    <div class="thank-you-card survey-card">
+                        <!-- Header -->
+                        <div class="survey-header">
+                            <div class="header-icons">
+                                <div class="icon-wrapper" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                                    <i class="fas fa-check"></i>
                                 </div>
-                                <h1 class="error-title">Ops! Algo deu errado</h1>
-                                <p class="error-message">{{ error }}</p>
+                            </div>
+                            <h1 class="thank-you-title survey-title">Obrigado pelo seu feedback!</h1>
+                            <p class="survey-subtitle">Sua avaliação foi enviada com sucesso</p>
+                        </div>
+
+                        {% if survey %}
+                        <!-- Trip Details -->
+                        <div class="trip-details">
+                            <div class="detail-item">
+                                <i class="fas fa-route"></i>
+                                <span class="detail-label">Viagem:</span>
+                                <span class="detail-value">{{ survey.trip_name }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span class="detail-label">Destino:</span>
+                                <span class="detail-value">{{ survey.location }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Thank You Message -->
+                        <div class="text-center">
+                            <div class="mb-4">
+                                <p class="lead">Sua opinião é muito importante para nós!</p>
+                                <p>Agradecemos por dedicar seu tempo para avaliar nossa viagem. Seu feedback nos ajuda a melhorar continuamente nossos serviços.</p>
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
                                 <a href="/" class="btn btn-primary">
                                     <i class="fas fa-home"></i>
-                                    Voltar ao Início
+                                    Página Inicial
                                 </a>
                             </div>
-                        {% else %}
-                            <!-- Success State -->
-                            <div class="success-state">
-                                <div class="header-icons">
-                                    <div class="icon-wrapper success-icon">
-                                        <i class="fas fa-check-circle"></i>
-                                    </div>
-                                </div>
-                                <h1 class="thank-you-title">Obrigado pelo seu feedback!</h1>
-                                <p class="thank-you-message">
-                                    Sua resposta foi enviada com sucesso. Agradecemos por dedicar seu tempo para compartilhar sua experiência de viagem conosco.
-                                </p>
-
-                                {% if survey %}
-                                <div class="completion-details">
-                                    <div class="detail-item">
-                                        <i class="fas fa-route"></i>
-                                        <span>{{ survey.trip_name }}</span>
-                                    </div>
-                                    <div class="detail-item">
-                                        <i class="fas fa-map-marker-alt"></i>
-                                        <span>{{ survey.location }}</span>
-                                    </div>
-                                </div>
-                                {% endif %}
-
-                                <div class="thank-you-actions">
-
-
-                                </div>
-                            </div>
-                        {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -82,3 +81,5 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+</new_str>
+
