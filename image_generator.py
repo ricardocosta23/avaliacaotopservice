@@ -52,8 +52,8 @@ def create_survey_image(survey_data, survey_url):
         qr_img = generate_qr_code_image(survey_url, 400)  # Larger QR code
         if qr_img:
             # Center the QR code
-            qr_x = (img_size - 400) // 2
-            qr_y = (img_size - 400) // 2
+            qr_x = (img_size - 500) // 2
+            qr_y = (img_size - 500) // 2
             img.paste(qr_img, (qr_x, qr_y))
 
         # Convert to bytes
