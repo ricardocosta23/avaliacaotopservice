@@ -70,7 +70,7 @@
                                     Aéreo
                                 </h3>
                                 <div class="yes-no-question">
-                                    <label class="yes-no-label">Você utilizou malha aérea para viagem?</label>
+                                    <label class="yes-no-label">Você utilizou malha aérea para viagem? <span style="color: red;">*</span></label>
                                     <div class="yes-no-options">
                                         <label class="yes-no-option">
                                             <input type="radio" name="used_air_travel" value="sim" onchange="toggleConditionalQuestion('air-rating', this.checked)">
@@ -84,7 +84,7 @@
                                 </div>
 
                                 <div class="conditional-question" id="air-rating" style="display: none;">
-                                    <label class="rating-label">Avalie os vôos sugeridos para sua viagem:</label>
+                                    <label class="rating-label">Avalie os vôos sugeridos para sua viagem: <span style="color: red;">*</span></label>
                                     <div class="rating-scale-small">
                                         <div class="rating-numbers">
                                             {% for i in range(1, 11) %}
@@ -106,7 +106,7 @@
                                     Guias
                                 </h3>
                                 <div class="yes-no-question">
-                                    <label class="yes-no-label">Na sua viagem teve a presença de guias?</label>
+                                    <label class="yes-no-label">Na sua viagem teve a presença de guias? <span style="color: red;">*</span></label>
                                     <div class="yes-no-options">
                                         <label class="yes-no-option">
                                             <input type="radio" name="had_guides" value="sim" onchange="toggleConditionalQuestion('guides-rating', this.checked)">
@@ -120,7 +120,7 @@
                                 </div>
 
                                 <div class="conditional-question" id="guides-rating" style="display: none;">
-                                    <label class="rating-label">Avalie a equipe de guias Top Service que acompanharam a viagem:</label>
+                                    <label class="rating-label">Avalie a equipe de guias Top Service que acompanharam a viagem: <span style="color: red;">*</span></label>
                                     <div class="rating-scale-small">
                                         <div class="rating-numbers">
                                             {% for i in range(1, 11) %}
@@ -145,7 +145,7 @@
                                 <!-- Hotel 1 (always show if hotel_1 exists) -->
                                 {% if survey.hotel_1 %}
                                 <div class="hotel-rating">
-                                    <label class="rating-label">{{ survey.hotel_1 }}:</label>
+                                    <label class="rating-label">{{ survey.hotel_1 }}: <span style="color: red;">*</span></label>
                                     <div class="rating-scale-small">
                                         <div class="rating-numbers">
                                             {% for i in range(1, 11) %}
@@ -162,7 +162,7 @@
                                 <!-- Hotel 2 (only show if hotel_2 exists and is not blank) -->
                                 {% if survey.hotel_2 %}
                                 <div class="hotel-rating">
-                                    <label class="rating-label">{{ survey.hotel_2 }}:</label>
+                                    <label class="rating-label">{{ survey.hotel_2 }}: <span style="color: red;">*</span></label>
                                     <div class="rating-scale-small">
                                         <div class="rating-numbers">
                                             {% for i in range(1, 11) %}
@@ -189,7 +189,7 @@
                                     Restaurantes
                                 </h3>
                                 <div class="yes-no-question">
-                                    <label class="yes-no-label">Você teve experiências em restaurantes durante a viagem?</label>
+                                    <label class="yes-no-label">Você teve experiências em restaurantes durante a viagem? <span style="color: red;">*</span></label>
                                     <div class="yes-no-options">
                                         <label class="yes-no-option">
                                             <input type="radio" name="had_restaurants" value="sim" onchange="toggleConditionalQuestion('restaurants-rating', this.checked)">
@@ -203,7 +203,7 @@
                                 </div>
 
                                 <div class="conditional-question" id="restaurants-rating" style="display: none;">
-                                    <label class="rating-label">Avalie sua experiência em restaurantes oferecidos durante a viagem para alimentação com o grupo:</label>
+                                    <label class="rating-label">Avalie sua experiência em restaurantes oferecidos durante a viagem para alimentação com o grupo: <span style="color: red;">*</span></label>
                                     <div class="rating-scale-small">
                                         <div class="rating-numbers">
                                             {% for i in range(1, 11) %}
@@ -224,7 +224,7 @@
                                     Passeios e Atividades
                                 </h3>
                                 <div class="yes-no-question">
-                                    <label class="yes-no-label">Na sua viagem tiveram passeios e atividades?</label>
+                                    <label class="yes-no-label">Na sua viagem tiveram passeios e atividades? <span style="color: red;">*</span></label>
                                     <div class="yes-no-options">
                                         <label class="yes-no-option">
                                             <input type="radio" name="had_activities" value="sim" onchange="toggleConditionalQuestion('activities-rating', this.checked)">
@@ -238,7 +238,7 @@
                                 </div>
 
                                 <div class="conditional-question" id="activities-rating" style="display: none;">
-                                    <label class="rating-label">Como foi sua experiência em relação a passeios e atividades:</label>
+                                    <label class="rating-label">Como foi sua experiência em relação a passeios e atividades: <span style="color: red;">*</span></label>
                                     <div class="rating-scale-small">
                                         <div class="rating-numbers">
                                             {% for i in range(1, 11) %}
@@ -258,7 +258,7 @@
                                     <i class="fas fa-star"></i>
                                     Viagem de forma geral
                                 </h3>
-                                <label class="rating-label">Como você avalia a viagem de forma geral? Você indicaria a Top Service para realização de uma futura viagem?</label>
+                                <label class="rating-label">Como você avalia a viagem de forma geral? Você indicaria a Top Service para realização de uma futura viagem? <span style="color: red;">*</span></label>
                                 <div class="rating-scale-small">
                                     <div class="rating-numbers">
                                         {% for i in range(1, 11) %}
