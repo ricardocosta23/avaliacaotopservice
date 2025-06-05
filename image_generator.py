@@ -47,13 +47,13 @@ def create_survey_image(survey_data, survey_url):
             # Try to load a system font
             title_font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", 36)
             subtitle_font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", 24)
-            text_font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf", 28)  # Increased from 20 to 28
+            text_font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", 56)  # Doubled from 28 to 56
         except:
             try:
                 # Fallback fonts
                 title_font = ImageFont.truetype("arial.ttf", 36)
                 subtitle_font = ImageFont.truetype("arial.ttf", 24)
-                text_font = ImageFont.truetype("arial.ttf", 28)  # Increased from 20 to 28
+                text_font = ImageFont.truetype("arial.ttf", 56)  # Doubled from 28 to 56
             except:
                 # Use default font if no system fonts available
                 title_font = ImageFont.load_default()
@@ -95,15 +95,12 @@ def create_survey_image(survey_data, survey_url):
         subtitle_bbox = draw.textbbox((0, 0), subtitle_text, font=subtitle_font)
         subtitle_width = subtitle_bbox[2] - subtitle_bbox[0]
         subtitle_x = (img_size - subtitle_width) // 2
-        draw.text((subtitle_x, y_offset), subtitle_text, fill=gray_color, font=subtitle_font)
-        y_offset += 40
-        
-        # Add trip details
+        # Add trip details with icons
         details = [
-            f"Empresa: {survey_data.get('company_name', 'N/A')}",
-            f"Destino: {survey_data.get('location', 'N/A')}",
-            f"Data: {survey_data.get('date', 'N/A')}",
-            f"Viagem: {survey_data.get('trip_name', 'N/A')}"
+            f"🏢 Empresa: {survey_data.get('company_name', 'N/A')}",
+            f"📍 Destino: {survey_data.get('location', 'N/A')}",
+            f"📅 Data: {survey_data.get('date', 'N/A')}",
+            f"✈️ Viagem: {survey_data.get('trip_name', 'N/A')}"
         ]
         
         for detail in details:
@@ -111,7 +108,7 @@ def create_survey_image(survey_data, survey_url):
             detail_width = detail_bbox[2] - detail_bbox[0]
             detail_x = (img_size - detail_width) // 2
             draw.text((detail_x, y_offset), detail, fill=text_color, font=text_font)
-            y_offset += 38  # Increased spacing for larger font
+            y_offset += 50  # Reduced spacing between lines from 38 to 50 (accounting for larger font)
         
         y_offset += 20
         
@@ -125,6 +122,13 @@ def create_survey_image(survey_data, survey_url):
         if qr_img:
             qr_x = (img_size - 250) // 2
             img.paste(qr_img, (qr_x, y_offset))
+            y_offset += 270  # QR code height + spacing
+            
+            # Add subtitle below QR code
+            subtitle_bbox = draw.textbbox((0, 0), subtitle_text, font=subtitle_font)
+            subtitle_width = subtitle_bbox[2] - subtitle_bbox[0]
+            subtitle_x = (img_size - subtitle_width) // 2
+            draw.text((subtitle_x, y_offset), subtitle_text, fill=gray_color, font=subtitle_font)
         else:
             # Add placeholder text if QR code fails
             placeholder_text = "QR Code não pôde ser gerado"
