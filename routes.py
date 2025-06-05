@@ -177,7 +177,7 @@ def reconstruct_survey_from_monday(pulse_id):
                 print(f"Full column data: {col}")
                 print(f"Column type: {col.get('type')}")
                 print(f"=== END RECONSTRUCT RAW DEBUG ===")
-                
+
                 # Handle mirror column same way as other mirror columns
                 display_value = col.get('display_value')
                 if display_value:
@@ -185,7 +185,7 @@ def reconstruct_survey_from_monday(pulse_id):
                 else:
                     # Fallback to text or value
                     lookup_mkrkwqep_value = col.get('text') or col.get('value') or None
-                
+
                 print(f"=== RECONSTRUCT DEBUG lookup_mkrkwqep PROCESSING ===")
                 print(f"Column ID: {col['id']}")
                 print(f"Display value: {display_value}")
@@ -284,6 +284,11 @@ def update_board_with_lookup_value(item_name, lookup_value):
         ) {
             id
             name
+            column_values {
+                id
+                text
+                value
+            }
         }
     }
     """
@@ -298,11 +303,13 @@ def update_board_with_lookup_value(item_name, lookup_value):
     column_values = {}
 
     if lookup_value and str(lookup_value).strip():
+        # Ensure we're using the correct format for text columns
         column_values["text_mkrkqj1g"] = str(lookup_value).strip()
         print(f"Added to column_values: {column_values}")
     else:
-        print(f"lookup_value is empty or None, creating item without lookup value")
-        # Continue with empty column_values - don't return early
+        print(f"lookup_value is empty or None, not creating item")
+        print(f"=== END BOARD UPDATE DEBUG ===")
+        return {"error": "No valid lookup value provided"}
 
     variables = {
         "boardId": "197599163",
@@ -310,9 +317,15 @@ def update_board_with_lookup_value(item_name, lookup_value):
         "columnValues": json.dumps(column_values)
     }
 
-    print(f"Sending to Monday.com - Board ID: 197599163, Variables: {variables}")
+    print(f"Final variables being sent: {variables}")
+    print(f"Column values JSON string: '{json.dumps(column_values)}'")
+    print(f"Raw JSON being sent: {repr(json.dumps(column_values))}")
+    print(f"=== END BOARD UPDATE DEBUG ===")
+
     result = monday_graphql_request(query, variables)
-    print(f"Monday.com response for board 197599163: {result}")
+    print(f"=== MONDAY.COM RESPONSE DEBUG ===")
+    print(f"Full response: {json.dumps(result, indent=2)}")
+    print(f"=== END RESPONSE DEBUG ===")
     return result
 
 def create_survey_result_item(survey_data):
@@ -542,7 +555,7 @@ def monday_webhook():
                             print(f"Full column data: {col}")
                             print(f"Column type: {col.get('type')}")
                             print(f"=== END RAW DEBUG ===")
-                            
+
                             # Handle mirror column same way as lookup_mkrb9ns5
                             display_value = col.get('display_value')
                             if display_value:
@@ -550,7 +563,7 @@ def monday_webhook():
                             else:
                                 # Fallback to text or value
                                 lookup_mkrkwqep_value = col.get('text') or col.get('value') or None
-                            
+
                             print(f"=== DEBUG lookup_mkrkwqep PROCESSING ===")
                             print(f"Column ID: {col['id']}")
                             print(f"Display value: {display_value}")
@@ -706,8 +719,7 @@ def survey_form(survey_id):
                 # Save reconstructed survey to memory for future requests
                 save_survey(survey_id, survey)
 
-        # Handle legacy monday_ prefix format for backwards compatibility
-        elif survey_id.startswith('monday_'):
+        # Handle legacy monday_ prefix format for backwards compatibility        elif survey_id.startswith('monday_'):
             pulse_id = survey_id.replace('monday_', '')
             survey = reconstruct_survey_from_monday(pulse_id)
             if survey:
@@ -806,7 +818,9 @@ def submit_survey(survey_id):
         lookup_mkrkwqep_value = survey.get('lookup_mkrkwqep_value')
         print(f"=== SUBMIT SURVEY DEBUG ===")
         print(f"Original survey lookup_mkrkwqep_value: {lookup_mkrkwqep_value}")
+        print(f"Original survey lookup_mkrkwqep_value type: {type(lookup_mkrkwqep_value)}")
         print(f"Original survey keys: {list(survey.keys())}")
+        print(f"Full survey data: {survey}")
         print(f"=== END SUBMIT SURVEY DEBUG ===")
 
         survey_data = {
@@ -845,23 +859,40 @@ def submit_survey(survey_id):
 
             # Update board 197599163 with lookup_mkrkwqep value if available
             lookup_value = survey_data.get('lookup_mkrkwqep_value')
-            if lookup_value:
-                print(f"Updating board 197599163 with lookup value: {lookup_value}")
-                print(f"Trip name for board 197599163: {survey_data['trip_name']}")
+            print(f"=== BOARD 197599163 UPDATE ATTEMPT ===")
+            print(f"lookup_value from survey_data: {lookup_value}")
+            print(f"lookup_value type: {type(lookup_value)}")
+            print(f"survey_data keys: {list(survey_data.keys())}")
+            print(f"original survey lookup_mkrkwqep_value: {survey.get('lookup_mkrkwqep_value')}")
+            
+            if lookup_value and str(lookup_value).strip():
+                print(f"Proceeding to update board 197599163 with lookup value: '{lookup_value}'")
+                print(f"Trip name for board 197599163: '{survey_data['trip_name']}'")
                 lookup_result = update_board_with_lookup_value(
                     survey_data['trip_name'], 
                     lookup_value
                 )
+                print(f"=== BOARD 197599163 RESULT ===")
+                print(f"Full lookup_result: {lookup_result}")
+                
                 if 'errors' in lookup_result:
                     print(f"Error updating board 197599163: {lookup_result['errors']}")
+                elif lookup_result.get('error'):
+                    print(f"Error from function: {lookup_result['error']}")
                 else:
                     lookup_item = lookup_result.get('data', {}).get('create_item', {})
                     print(f"Successfully created item on board 197599163: {lookup_item.get('id')}")
                     print(f"Lookup value '{lookup_value}' sent to text_mkrkqj1g column")
+                    print(f"Item name: '{lookup_item.get('name')}'")
+                print(f"=== END BOARD 197599163 RESULT ===")
             else:
-                print("No lookup_mkrkwqep_value found in survey_data")
+                print(f"=== BOARD 197599163 UPDATE SKIPPED ===")
+                print(f"Reason: lookup_value is empty or None")
+                print(f"lookup_value: '{lookup_value}'")
+                print(f"lookup_value stripped: '{str(lookup_value).strip() if lookup_value else 'N/A'}'")
                 print(f"Available survey_data keys: {list(survey_data.keys())}")
                 print(f"Original survey lookup_mkrkwqep_value: {survey.get('lookup_mkrkwqep_value')}")
+                print(f"=== END BOARD 197599163 UPDATE SKIPPED ===")
 
             # Increment submission count
             increment_submission_count(survey_id)
