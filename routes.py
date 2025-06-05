@@ -273,61 +273,6 @@ def upload_file_to_monday(item_id, file_path, column_id="file_mkrk1fcz"):
         print(f"Error uploading file to Monday.com: {str(e)}")
         return {"errors": [str(e)]}
 
-def update_board_with_lookup_value(item_name, lookup_value):
-    """Create item on board 9242892489 with lookup_mkrkwqep value in text_mkrkqj1g column"""
-    query = """
-    mutation($boardId: ID!, $itemName: String!, $columnValues: JSON!) {
-        create_item(
-            board_id: $boardId,
-            item_name: $itemName,
-            column_values: $columnValues
-        ) {
-            id
-            name
-            column_values {
-                id
-                text
-                value
-            }
-        }
-    }
-    """
-    print(f"=== BOARD 9242892489 UPDATE DEBUG ===")
-    print(f"Function called with item_name: '{item_name}'")
-    print(f"Function called with lookup_value: '{lookup_value}'")
-    print(f"lookup_value type: {type(lookup_value)}")
-    print(f"lookup_value is None: {lookup_value is None}")
-    print(f"lookup_value is empty string: {lookup_value == ''}")
-
-    # Build column values with lookup_mkrkwqep value
-    column_values = {}
-
-    if lookup_value and str(lookup_value).strip():
-        # Ensure we're using the correct format for text columns
-        column_values["text_mkrkqj1g"] = str(lookup_value).strip()
-        print(f"Added to column_values: {column_values}")
-    else:
-        print(f"lookup_value is empty or None, not creating item")
-        print(f"=== END BOARD UPDATE DEBUG ===")
-        return {"error": "No valid lookup value provided"}
-
-    variables = {
-        "boardId": "9242892489",
-        "itemName": item_name,
-        "columnValues": json.dumps(column_values)
-    }
-
-    print(f"Final variables being sent: {variables}")
-    print(f"Column values JSON string: '{json.dumps(column_values)}'")
-    print(f"Raw JSON being sent: {repr(json.dumps(column_values))}")
-    print(f"=== END BOARD UPDATE DEBUG ===")
-
-    result = monday_graphql_request(query, variables)
-    print(f"=== MONDAY.COM RESPONSE DEBUG ===")
-    print(f"Full response: {json.dumps(result, indent=2)}")
-    print(f"=== END RESPONSE DEBUG ===")
-    return result
-
 def create_survey_result_item(survey_data):
     """Create a new item with survey results"""
     query = """
@@ -857,11 +802,10 @@ def submit_survey(survey_id):
             created_item = monday_result.get('data', {}).get('create_item', {})
             print(f"Successfully created Monday.com item: {created_item.get('id')}")
 
-            # Note: Board 9242892489 update removed - board doesn't exist
-            # The lookup value is successfully captured and stored in the main results
+            # Log lookup value for reference (successfully captured from survey)
             lookup_value = survey_data.get('lookup_mkrkwqep_value')
             if lookup_value:
-                print(f"Lookup value '{lookup_value}' captured successfully from survey")
+                print(f"Lookup value '{lookup_value}' successfully captured and stored in survey results")
             else:
                 print("No lookup value found in survey")
 
