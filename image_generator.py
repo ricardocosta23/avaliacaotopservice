@@ -3,7 +3,7 @@ import qrcode
 from io import BytesIO
 import os
 
-def generate_qr_code_image(url, size=400):
+def generate_qr_code_image(url, size=500):
     """Generate QR code image for the survey URL"""
     try:
         qr = qrcode.QRCode(
@@ -30,7 +30,7 @@ def create_survey_image(survey_data, survey_url):
     """Create a square image with QR code centered on background"""
     try:
         # Image dimensions (square)
-        img_size = 800
+        img_size = 1000
 
         # Load background image
         background_path = os.path.join('static', 'images', 'fundoqrpng.png')
