@@ -274,7 +274,7 @@ def upload_file_to_monday(item_id, file_path, column_id="file_mkrk1fcz"):
         return {"errors": [str(e)]}
 
 def update_board_with_lookup_value(item_name, lookup_value):
-    """Create item on board 197599163 with lookup_mkrkwqep value in text_mkrkqj1g column"""
+    """Create item on board 9242892489 with lookup_mkrkwqep value in text_mkrkqj1g column"""
     query = """
     mutation($boardId: ID!, $itemName: String!, $columnValues: JSON!) {
         create_item(
@@ -292,7 +292,7 @@ def update_board_with_lookup_value(item_name, lookup_value):
         }
     }
     """
-    print(f"=== BOARD 197599163 UPDATE DEBUG ===")
+    print(f"=== BOARD 9242892489 UPDATE DEBUG ===")
     print(f"Function called with item_name: '{item_name}'")
     print(f"Function called with lookup_value: '{lookup_value}'")
     print(f"lookup_value type: {type(lookup_value)}")
@@ -312,7 +312,7 @@ def update_board_with_lookup_value(item_name, lookup_value):
         return {"error": "No valid lookup value provided"}
 
     variables = {
-        "boardId": "197599163",
+        "boardId": "9242892489",
         "itemName": item_name,
         "columnValues": json.dumps(column_values)
     }
@@ -857,7 +857,7 @@ def submit_survey(survey_id):
             created_item = monday_result.get('data', {}).get('create_item', {})
             print(f"Successfully created Monday.com item: {created_item.get('id')}")
 
-            # Note: Board 197599163 update removed - board doesn't exist
+            # Note: Board 9242892489 update removed - board doesn't exist
             # The lookup value is successfully captured and stored in the main results
             lookup_value = survey_data.get('lookup_mkrkwqep_value')
             if lookup_value:
