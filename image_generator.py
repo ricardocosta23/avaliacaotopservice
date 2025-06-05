@@ -33,8 +33,40 @@ def create_survey_image(survey_data, survey_url):
         # Image dimensions (square)
         img_size = 800
         
-        # Create a new image with white background
-        img = Image.new('RGB', (img_size, img_size), color='white')
+        # Load background image
+        background_path = os.path.join('static', 'images', 'fundoqrpng.png')
+        if os.path.exists(background_path):
+            try:
+                background = Image.open(background_path)
+                # Resize background to fit the square image
+                background = background.resize((img_size, img_size), Image.Resampling.LANCZOS)
+                img = background.copy()
+            except Exception as e:
+                print(f"Error loading background image: {e}")
+                # Fallback to white background
+                img = Image.new('RGB', (img_size, img_size), color='white')
+        else:
+            # Fallback to white background
+            img = Image.new('RGB', (img_size, img_size), color='white')
+        
+        # Create a semi-transparent white overlay (like the form style)
+        overlay = Image.new('RGBA', (img_size, img_size), (255, 255, 255, 0))
+        overlay_draw = ImageDraw.Draw(overlay)
+        
+        # Create rounded rectangle for the white layer
+        margin = 40
+        border_radius = 20
+        
+        # Draw rounded rectangle on overlay
+        overlay_draw.rounded_rectangle(
+            [margin, margin, img_size - margin, img_size - margin],
+            radius=border_radius,
+            fill=(255, 255, 255, 240)  # Semi-transparent white
+        )
+        
+        # Composite the overlay onto the background
+        img = Image.alpha_composite(img.convert('RGBA'), overlay).convert('RGB')
+        
         draw = ImageDraw.Draw(img)
         
         # Colors
@@ -42,18 +74,18 @@ def create_survey_image(survey_data, survey_url):
         text_color = (45, 55, 72)       # #2d3748
         gray_color = (74, 85, 104)      # #4a5568
         
-        # Try to load fonts
+        # Try to load fonts - tripled sizes
         try:
             # Try to load a system font
-            title_font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", 36)
-            subtitle_font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", 24)
-            text_font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", 56)  # Doubled from 28 to 56
+            title_font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", 108)  # 36 * 3
+            subtitle_font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", 72)  # 24 * 3
+            text_font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", 168)  # 56 * 3
         except:
             try:
                 # Fallback fonts
-                title_font = ImageFont.truetype("arial.ttf", 36)
-                subtitle_font = ImageFont.truetype("arial.ttf", 24)
-                text_font = ImageFont.truetype("arial.ttf", 56)  # Doubled from 28 to 56
+                title_font = ImageFont.truetype("arial.ttf", 108)
+                subtitle_font = ImageFont.truetype("arial.ttf", 72)
+                text_font = ImageFont.truetype("arial.ttf", 168)
             except:
                 # Use default font if no system fonts available
                 title_font = ImageFont.load_default()
@@ -62,25 +94,25 @@ def create_survey_image(survey_data, survey_url):
         
         # Add company logo if available
         logo_path = os.path.join('static', 'images', 'pdfqr.png')
-        y_offset = 30
+        y_offset = 60  # Start within the white layer
         
         if os.path.exists(logo_path):
             try:
                 logo = Image.open(logo_path)
                 # Resize logo to fit width with aspect ratio
-                logo_width = 600
+                logo_width = 300  # Smaller to fit in the white layer
                 logo_height = int((logo_width * logo.height) / logo.width)
                 logo = logo.resize((logo_width, logo_height), Image.Resampling.LANCZOS)
                 
                 # Center logo horizontally
                 logo_x = (img_size - logo_width) // 2
                 img.paste(logo, (logo_x, y_offset))
-                y_offset += logo_height + 30
+                y_offset += logo_height + 20
             except Exception as e:
                 print(f"Error adding logo to image: {e}")
-                y_offset += 50
+                y_offset += 30
         else:
-            y_offset += 50
+            y_offset += 30
         
         # Add title
         title_text = "Pesquisa de Experiência de Viagem"
@@ -88,19 +120,14 @@ def create_survey_image(survey_data, survey_url):
         title_width = title_bbox[2] - title_bbox[0]
         title_x = (img_size - title_width) // 2
         draw.text((title_x, y_offset), title_text, fill=primary_color, font=title_font)
-        y_offset += 50
+        y_offset += 120  # Reduced spacing
         
-        # Add subtitle
-        subtitle_text = "Escaneie o QR Code para acessar"
-        subtitle_bbox = draw.textbbox((0, 0), subtitle_text, font=subtitle_font)
-        subtitle_width = subtitle_bbox[2] - subtitle_bbox[0]
-        subtitle_x = (img_size - subtitle_width) // 2
-        # Add trip details with icons
+        # Add trip details without icons
         details = [
-            f"🏢 Empresa: {survey_data.get('company_name', 'N/A')}",
-            f"📍 Destino: {survey_data.get('location', 'N/A')}",
-            f"📅 Data: {survey_data.get('date', 'N/A')}",
-            f"✈️ Viagem: {survey_data.get('trip_name', 'N/A')}"
+            f"Empresa: {survey_data.get('company_name', 'N/A')}",
+            f"Destino: {survey_data.get('location', 'N/A')}",
+            f"Data: {survey_data.get('date', 'N/A')}",
+            f"Viagem: {survey_data.get('trip_name', 'N/A')}"
         ]
         
         for detail in details:
@@ -108,23 +135,24 @@ def create_survey_image(survey_data, survey_url):
             detail_width = detail_bbox[2] - detail_bbox[0]
             detail_x = (img_size - detail_width) // 2
             draw.text((detail_x, y_offset), detail, fill=text_color, font=text_font)
-            y_offset += 50  # Reduced spacing between lines from 38 to 50 (accounting for larger font)
+            y_offset += 20  # Much reduced spacing between lines
         
-        y_offset += 20
+        y_offset += 30
         
         # Add horizontal line
         line_margin = 100
         draw.line([(line_margin, y_offset), (img_size - line_margin, y_offset)], fill=primary_color, width=3)
-        y_offset += 30
+        y_offset += 40
         
         # Generate and add QR code
-        qr_img = generate_qr_code_image(survey_url, 250)
+        qr_img = generate_qr_code_image(survey_url, 200)  # Smaller QR code
         if qr_img:
-            qr_x = (img_size - 250) // 2
+            qr_x = (img_size - 200) // 2
             img.paste(qr_img, (qr_x, y_offset))
-            y_offset += 270  # QR code height + spacing
+            y_offset += 220  # QR code height + spacing
             
             # Add subtitle below QR code
+            subtitle_text = "Escaneie o QR Code para acessar"
             subtitle_bbox = draw.textbbox((0, 0), subtitle_text, font=subtitle_font)
             subtitle_width = subtitle_bbox[2] - subtitle_bbox[0]
             subtitle_x = (img_size - subtitle_width) // 2
