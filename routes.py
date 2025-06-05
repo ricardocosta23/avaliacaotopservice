@@ -857,42 +857,13 @@ def submit_survey(survey_id):
             created_item = monday_result.get('data', {}).get('create_item', {})
             print(f"Successfully created Monday.com item: {created_item.get('id')}")
 
-            # Update board 197599163 with lookup_mkrkwqep value if available
+            # Note: Board 197599163 update removed - board doesn't exist
+            # The lookup value is successfully captured and stored in the main results
             lookup_value = survey_data.get('lookup_mkrkwqep_value')
-            print(f"=== BOARD 197599163 UPDATE ATTEMPT ===")
-            print(f"lookup_value from survey_data: {lookup_value}")
-            print(f"lookup_value type: {type(lookup_value)}")
-            print(f"survey_data keys: {list(survey_data.keys())}")
-            print(f"original survey lookup_mkrkwqep_value: {survey.get('lookup_mkrkwqep_value')}")
-            
-            if lookup_value and str(lookup_value).strip():
-                print(f"Proceeding to update board 197599163 with lookup value: '{lookup_value}'")
-                print(f"Trip name for board 197599163: '{survey_data['trip_name']}'")
-                lookup_result = update_board_with_lookup_value(
-                    survey_data['trip_name'], 
-                    lookup_value
-                )
-                print(f"=== BOARD 197599163 RESULT ===")
-                print(f"Full lookup_result: {lookup_result}")
-                
-                if 'errors' in lookup_result:
-                    print(f"Error updating board 197599163: {lookup_result['errors']}")
-                elif lookup_result.get('error'):
-                    print(f"Error from function: {lookup_result['error']}")
-                else:
-                    lookup_item = lookup_result.get('data', {}).get('create_item', {})
-                    print(f"Successfully created item on board 197599163: {lookup_item.get('id')}")
-                    print(f"Lookup value '{lookup_value}' sent to text_mkrkqj1g column")
-                    print(f"Item name: '{lookup_item.get('name')}'")
-                print(f"=== END BOARD 197599163 RESULT ===")
+            if lookup_value:
+                print(f"Lookup value '{lookup_value}' captured successfully from survey")
             else:
-                print(f"=== BOARD 197599163 UPDATE SKIPPED ===")
-                print(f"Reason: lookup_value is empty or None")
-                print(f"lookup_value: '{lookup_value}'")
-                print(f"lookup_value stripped: '{str(lookup_value).strip() if lookup_value else 'N/A'}'")
-                print(f"Available survey_data keys: {list(survey_data.keys())}")
-                print(f"Original survey lookup_mkrkwqep_value: {survey.get('lookup_mkrkwqep_value')}")
-                print(f"=== END BOARD 197599163 UPDATE SKIPPED ===")
+                print("No lookup value found in survey")
 
             # Increment submission count
             increment_submission_count(survey_id)
