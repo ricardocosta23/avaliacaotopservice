@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime
 from flask import request, render_template, redirect, url_for, jsonify, flash, send_file
 from app import app
-
+from pdf_generator import create_survey_pdf
 from image_generator import create_survey_image
 from database import init_database, save_survey, get_survey, increment_submission_count, get_all_surveys
 import os
@@ -578,7 +578,53 @@ def monday_webhook():
                 print(f"Exception when calling Monday.com API: {str(api_error)}")
                 logging.error(f"Exception when calling Monday.com API: {str(api_error)}")
 
-            
+            # Generate PDF with QR code
+            try:
+                print("Starting PDF generation...")
+                pdf_data = create_survey_pdf(survey_data, survey_url)
+
+                if pdf_data and len(pdf_data) > 0:
+                    print(f"PDF generated successfully, size: {len(pdf_data)} bytes")
+
+                    # For Vercel serverless, use /tmp directory for temporary files
+                    import tempfile
+
+                    # Create temporary file for PDF
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_pdf:
+                        temp_pdf.write(pdf_data)
+                        temp_pdf_path = temp_pdf.name
+
+                    print(f"PDF saved to temporary path: {temp_pdf_path}")
+
+                    # Upload PDF to Monday.com file column
+                    try:
+                        upload_result = upload_file_to_monday(pulse_id, temp_pdf_path)
+                        if 'errors' in upload_result:
+                            print(f"Error uploading PDF to Monday.com: {upload_result['errors']}")
+                            logging.error(f"Monday.com PDF upload error: {upload_result['errors']}")
+                        else:
+                            print("Successfully uploaded PDF to Monday.com")
+                            logging.info("Successfully uploaded PDF to Monday.com")
+
+                    except Exception as upload_error:
+                        print(f"Exception when uploading PDF to Monday.com: {str(upload_error)}")
+                        logging.error(f"Exception when uploading PDF to Monday.com: {str(upload_error)}")
+                    finally:
+                        # Always cleanup temporary file
+                        try:
+                            os.remove(temp_pdf_path)
+                            print(f"Temporary PDF file deleted: {temp_pdf_path}")
+                        except Exception as delete_error:
+                            print(f"Error deleting temporary PDF file: {str(delete_error)}")
+                else:
+                    print("PDF generation returned empty data")
+                    logging.error("PDF generation returned empty data")
+
+            except Exception as pdf_error:
+                print(f"Error generating PDF: {str(pdf_error)}")
+                logging.error(f"Error generating PDF: {str(pdf_error)}")
+                import traceback
+                traceback.print_exc()
 
             # Generate PNG image with QR code
             try:
@@ -635,12 +681,15 @@ def monday_webhook():
             print(f"Company Name: {company_name}")
             print(f"Survey URL: {survey_url}")
             print(f"Monday.com Item ID: {pulse_id}")
+            pdf_download_url = url_for('download_pdf', survey_id=survey_id, _external=True)
+            print(f"PDF Download URL: {pdf_download_url}")
             print(f"{'='*60}\n")
 
             return jsonify({
                 "status": "success",
                 "survey_id": survey_id,
-                "survey_url": survey_url
+                "survey_url": survey_url,
+                "pdf_download_url": url_for('download_pdf', survey_id=survey_id, _external=True)
             }), 200
 
         except Exception as e:
@@ -874,7 +923,32 @@ def thank_you(survey_id):
     # If still no survey found, show thank you page without survey details
     return render_template('thank_you.html', survey=survey)
 
+@app.route('/survey/<survey_id>/pdf')
+def download_pdf(survey_id):
+    """Download the PDF with QR code for the survey"""
+    survey = get_survey(survey_id)
 
+    if not survey:
+        return "Pesquisa não encontrada", 404
+
+    # Always generate PDF on-the-fly since local files are deleted after upload to Monday.com
+    try:
+        survey_url = url_for('survey_form', survey_id=survey_id, _external=True)
+        pdf_data = create_survey_pdf(survey, survey_url)
+
+        # Return PDF directly from memory
+        pdf_buffer = BytesIO(pdf_data)
+        pdf_buffer.seek(0)
+
+        return send_file(
+            pdf_buffer,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=f"pesquisa_{survey['trip_name'].replace(' ', '_')}.pdf"
+        )
+    except Exception as e:
+        print(f"Error generating PDF on-the-fly: {str(e)}")
+        return "Erro ao gerar PDF", 500
 
 @app.route('/')
 def index():
@@ -1008,6 +1082,7 @@ def list_surveys():
                 <div class="survey-info">🕒 <strong>Criado em:</strong> {survey['created_at']}</div>
                 <div class="survey-actions">
                     <a href="/survey/{survey['survey_id']}" class="btn">Abrir Pesquisa</a>
+                    <a href="/survey/{survey['survey_id']}/pdf" class="btn">Download PDF</a>
                 </div>
             </div>
         """
