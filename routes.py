@@ -6,6 +6,7 @@ from datetime import datetime
 from flask import request, render_template, redirect, url_for, jsonify, flash, send_file
 from app import app
 from pdf_generator import create_survey_pdf
+from image_generator import create_survey_image
 from database import init_database, save_survey, get_survey, increment_submission_count, get_all_surveys
 import os
 from io import BytesIO
@@ -242,7 +243,7 @@ def update_survey_link(item_id, survey_url):
     result = monday_graphql_request(query, variables)
     return result
 
-def upload_file_to_monday(item_id, file_path, column_id="file_mkrk1fcz"):
+def upload_file_to_monday(item_id, file_path, column_id="file_mkrk1fcz", file_type='application/pdf'):
     """Upload file to Monday.com file column"""
 
     upload_url = "https://api.monday.com/v2/file"
@@ -256,7 +257,7 @@ def upload_file_to_monday(item_id, file_path, column_id="file_mkrk1fcz"):
             files = {
                 'query': (None, f'mutation ($file: File!) {{ add_file_to_column (item_id: {item_id}, column_id: "{column_id}", file: $file) {{ id }} }}'),
                 'map': (None, '{"1": ["variables.file"]}'),
-                '1': (os.path.basename(file_path), file_content, 'application/pdf')
+                '1': (os.path.basename(file_path), file_content, file_type)
             }
 
             response = requests.post(upload_url, headers=headers, files=files)
@@ -622,6 +623,51 @@ def monday_webhook():
             except Exception as pdf_error:
                 print(f"Error generating PDF: {str(pdf_error)}")
                 logging.error(f"Error generating PDF: {str(pdf_error)}")
+                import traceback
+                traceback.print_exc()
+
+            # Generate PNG image with QR code
+            try:
+                print("Starting PNG image generation...")
+                image_data = create_survey_image(survey_data, survey_url)
+
+                if image_data and len(image_data) > 0:
+                    print(f"PNG image generated successfully, size: {len(image_data)} bytes")
+
+                    # Create temporary file for PNG
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as temp_image:
+                        temp_image.write(image_data)
+                        temp_image_path = temp_image.name
+
+                    print(f"PNG image saved to temporary path: {temp_image_path}")
+
+                    # Upload PNG to Monday.com file column file_mkrmkhse
+                    try:
+                        upload_result = upload_file_to_monday(pulse_id, temp_image_path, column_id="file_mkrmkhse", file_type='image/png')
+                        if 'errors' in upload_result:
+                            print(f"Error uploading PNG to Monday.com: {upload_result['errors']}")
+                            logging.error(f"Monday.com PNG upload error: {upload_result['errors']}")
+                        else:
+                            print("Successfully uploaded PNG to Monday.com")
+                            logging.info("Successfully uploaded PNG to Monday.com")
+
+                    except Exception as upload_error:
+                        print(f"Exception when uploading PNG to Monday.com: {str(upload_error)}")
+                        logging.error(f"Exception when uploading PNG to Monday.com: {str(upload_error)}")
+                    finally:
+                        # Always cleanup temporary file
+                        try:
+                            os.remove(temp_image_path)
+                            print(f"Temporary PNG file deleted: {temp_image_path}")
+                        except Exception as delete_error:
+                            print(f"Error deleting temporary PNG file: {str(delete_error)}")
+                else:
+                    print("PNG image generation returned empty data")
+                    logging.error("PNG image generation returned empty data")
+
+            except Exception as image_error:
+                print(f"Error generating PNG image: {str(image_error)}")
+                logging.error(f"Error generating PNG image: {str(image_error)}")
                 import traceback
                 traceback.print_exc()
 
