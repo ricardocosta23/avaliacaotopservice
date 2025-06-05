@@ -356,6 +356,11 @@ def create_survey_result_item(survey_data):
     if survey_data.get('next_destination'):
         column_values["long_text_mkrjd4z0"] = survey_data['next_destination']
 
+    # Pass lookup_mkrkwqep value to text_mkrkqj1g column
+    if survey_data.get('lookup_mkrkwqep_value'):
+        column_values["text_mkrkqj1g"] = str(survey_data['lookup_mkrkwqep_value'])
+        print(f"Adding lookup_mkrkwqep value '{survey_data['lookup_mkrkwqep_value']}' to text_mkrkqj1g column")
+
     # Use trip name as item name
     item_name = survey_data.get('trip_name', 'Nova avaliação')
 
