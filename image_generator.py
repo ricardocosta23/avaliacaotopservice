@@ -54,7 +54,7 @@ def create_survey_image(survey_data, survey_url):
         overlay_draw = ImageDraw.Draw(overlay)
         
         # Create rounded rectangle for the white layer
-        margin = 40
+        margin = 120
         border_radius = 20
         
         # Draw rounded rectangle on overlay
@@ -77,15 +77,15 @@ def create_survey_image(survey_data, survey_url):
         # Try to load fonts - tripled sizes
         try:
             # Try to load a system font
-            title_font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", 108)  # 36 * 3
-            subtitle_font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", 72)  # 24 * 3
-            text_font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", 168)  # 56 * 3
+            title_font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", 180)  # 36 * 3
+            subtitle_font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", 120)  # 24 * 3
+            text_font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", 280)  # 56 * 3
         except:
             try:
                 # Fallback fonts
-                title_font = ImageFont.truetype("arial.ttf", 108)
-                subtitle_font = ImageFont.truetype("arial.ttf", 72)
-                text_font = ImageFont.truetype("arial.ttf", 168)
+                title_font = ImageFont.truetype("arial.ttf", 180)
+                subtitle_font = ImageFont.truetype("arial.ttf", 120)
+                text_font = ImageFont.truetype("arial.ttf", 280)
             except:
                 # Use default font if no system fonts available
                 title_font = ImageFont.load_default()
@@ -145,11 +145,11 @@ def create_survey_image(survey_data, survey_url):
         y_offset += 40
         
         # Generate and add QR code
-        qr_img = generate_qr_code_image(survey_url, 200)  # Smaller QR code
+        qr_img = generate_qr_code_image(survey_url, 300)  # Smaller QR code
         if qr_img:
-            qr_x = (img_size - 200) // 2
+            qr_x = (img_size - 300) // 2
             img.paste(qr_img, (qr_x, y_offset))
-            y_offset += 220  # QR code height + spacing
+            y_offset += 320  # QR code height + spacing
             
             # Add subtitle below QR code
             subtitle_text = "Escaneie o QR Code para acessar"
