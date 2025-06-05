@@ -634,10 +634,20 @@ def monday_webhook():
                 if image_data and len(image_data) > 0:
                     print(f"PNG image generated successfully, size: {len(image_data)} bytes")
 
-                    # Create temporary file for PNG
-                    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as temp_image:
+                    # Create temporary file for PNG with custom name based on trip name
+                    import tempfile
+                    import re
+                    
+                    # Clean trip name for filename (remove special characters)
+                    clean_trip_name = re.sub(r'[^\w\s-]', '', trip_name)
+                    clean_trip_name = re.sub(r'[-\s]+', '_', clean_trip_name)
+                    filename = f"{clean_trip_name}.png"
+                    
+                    temp_dir = tempfile.gettempdir()
+                    temp_image_path = os.path.join(temp_dir, filename)
+                    
+                    with open(temp_image_path, 'wb') as temp_image:
                         temp_image.write(image_data)
-                        temp_image_path = temp_image.name
 
                     print(f"PNG image saved to temporary path: {temp_image_path}")
 
