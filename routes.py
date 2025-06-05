@@ -781,13 +781,20 @@ def submit_survey(survey_id):
         print(f"  Hotel 2: {hotel_2_rating}")
         print(f"  Restaurants: {restaurants_rating}")
         print(f"  Activities: {activities_rating}")
+        # Get the lookup_mkrkwqep_value from the original survey
+        lookup_mkrkwqep_value = survey.get('lookup_mkrkwqep_value')
+        print(f"=== SUBMIT SURVEY DEBUG ===")
+        print(f"Original survey lookup_mkrkwqep_value: {lookup_mkrkwqep_value}")
+        print(f"Original survey keys: {list(survey.keys())}")
+        print(f"=== END SUBMIT SURVEY DEBUG ===")
+
         survey_data = {
             'trip_name': survey['trip_name'],
             'location': survey['location'],
             'company_name': survey['company_name'],
             'original_date': survey.get('original_date'),
             'board_relation_value': survey.get('board_relation_value'),
-            'lookup_mkrkwqep_value': survey.get('lookup_mkrkwqep_value'),
+            'lookup_mkrkwqep_value': lookup_mkrkwqep_value,
             'overall_rating': overall_rating,
             'air_rating': air_rating,
             'guides_rating': guides_rating,
@@ -816,12 +823,12 @@ def submit_survey(survey_id):
             print(f"Successfully created Monday.com item: {created_item.get('id')}")
             
             # Update board 197599163 with lookup_mkrkwqep value if available
-            lookup_value = survey.get('lookup_mkrkwqep_value')
+            lookup_value = survey_data.get('lookup_mkrkwqep_value')
             if lookup_value:
                 print(f"Updating board 197599163 with lookup value: {lookup_value}")
-                print(f"Trip name for board 197599163: {survey['trip_name']}")
+                print(f"Trip name for board 197599163: {survey_data['trip_name']}")
                 lookup_result = update_board_with_lookup_value(
-                    survey['trip_name'], 
+                    survey_data['trip_name'], 
                     lookup_value
                 )
                 if 'errors' in lookup_result:
@@ -831,7 +838,9 @@ def submit_survey(survey_id):
                     print(f"Successfully created item on board 197599163: {lookup_item.get('id')}")
                     print(f"Lookup value '{lookup_value}' sent to text_mkrkqj1g column")
             else:
-                print("No lookup_mkrkwqep_value found in survey data")
+                print("No lookup_mkrkwqep_value found in survey_data")
+                print(f"Available survey_data keys: {list(survey_data.keys())}")
+                print(f"Original survey lookup_mkrkwqep_value: {survey.get('lookup_mkrkwqep_value')}")
             
             # Increment submission count
             increment_submission_count(survey_id)
