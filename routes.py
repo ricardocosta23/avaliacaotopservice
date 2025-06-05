@@ -6,7 +6,6 @@ from datetime import datetime
 from flask import request, render_template, redirect, url_for, jsonify, flash, send_file
 from app import app
 from pdf_generator import create_survey_pdf
-from image_generator import create_survey_image
 from database import init_database, save_survey, get_survey, increment_submission_count, get_all_surveys
 import os
 from io import BytesIO
@@ -243,7 +242,7 @@ def update_survey_link(item_id, survey_url):
     result = monday_graphql_request(query, variables)
     return result
 
-def upload_file_to_monday(item_id, file_path, column_id="file_mkrk1fcz", file_type="application/pdf"):
+def upload_file_to_monday(item_id, file_path, column_id="file_mkrk1fcz"):
     """Upload file to Monday.com file column"""
 
     upload_url = "https://api.monday.com/v2/file"
@@ -257,7 +256,7 @@ def upload_file_to_monday(item_id, file_path, column_id="file_mkrk1fcz", file_ty
             files = {
                 'query': (None, f'mutation ($file: File!) {{ add_file_to_column (item_id: {item_id}, column_id: "{column_id}", file: $file) {{ id }} }}'),
                 'map': (None, '{"1": ["variables.file"]}'),
-                '1': (os.path.basename(file_path), file_content, file_type)
+                '1': (os.path.basename(file_path), file_content, 'application/pdf')
             }
 
             response = requests.post(upload_url, headers=headers, files=files)
@@ -272,36 +271,6 @@ def upload_file_to_monday(item_id, file_path, column_id="file_mkrk1fcz", file_ty
 
     except Exception as e:
         print(f"Error uploading file to Monday.com: {str(e)}")
-        return {"errors": [str(e)]}
-
-def upload_image_to_monday(item_id, image_data, filename, column_id="file_mkrmkhse"):
-    """Upload image data to Monday.com file column"""
-    
-    upload_url = "https://api.monday.com/v2/file"
-    headers = {
-        "Authorization": f"Bearer {MONDAY_TOKEN}"
-    }
-    
-    try:
-        # Prepare the multipart form data
-        files = {
-            'query': (None, f'mutation ($file: File!) {{ add_file_to_column (item_id: {item_id}, column_id: "{column_id}", file: $file) {{ id }} }}'),
-            'map': (None, '{"1": ["variables.file"]}'),
-            '1': (filename, image_data, 'image/png')
-        }
-        
-        response = requests.post(upload_url, headers=headers, files=files)
-        result = response.json()
-        
-        # Check for errors in response
-        if response.status_code != 200:
-            print(f"HTTP Error {response.status_code}: {response.text}")
-            return {"errors": [f"HTTP {response.status_code}: {response.text}"]}
-        
-        return result
-        
-    except Exception as e:
-        print(f"Error uploading image to Monday.com: {str(e)}")
         return {"errors": [str(e)]}
 
 def create_survey_result_item(survey_data):
@@ -628,7 +597,7 @@ def monday_webhook():
 
                     # Upload PDF to Monday.com file column
                     try:
-                        upload_result = upload_file_to_monday(pulse_id, temp_pdf_path, "file_mkrk1fcz", "application/pdf")
+                        upload_result = upload_file_to_monday(pulse_id, temp_pdf_path)
                         if 'errors' in upload_result:
                             print(f"Error uploading PDF to Monday.com: {upload_result['errors']}")
                             logging.error(f"Monday.com PDF upload error: {upload_result['errors']}")
@@ -646,41 +615,6 @@ def monday_webhook():
                             print(f"Temporary PDF file deleted: {temp_pdf_path}")
                         except Exception as delete_error:
                             print(f"Error deleting temporary PDF file: {str(delete_error)}")
-
-                # Generate and upload survey image
-                try:
-                    print("Starting survey image generation...")
-                    image_data = create_survey_image(survey_data, survey_url)
-
-                    if image_data and len(image_data) > 0:
-                        print(f"Survey image generated successfully, size: {len(image_data)} bytes")
-
-                        # Create filename for the image
-                        safe_trip_name = survey_data.get('trip_name', 'survey').replace(' ', '_').replace('/', '-')
-                        image_filename = f"survey_{safe_trip_name}_{survey_id}.png"
-
-                        # Upload image to Monday.com file column file_mkrmkhse on board 9241811459
-                        try:
-                            image_upload_result = upload_image_to_monday(pulse_id, image_data, image_filename, "file_mkrmkhse")
-                            if 'errors' in image_upload_result:
-                                print(f"Error uploading image to Monday.com: {image_upload_result['errors']}")
-                                logging.error(f"Monday.com image upload error: {image_upload_result['errors']}")
-                            else:
-                                print("Successfully uploaded survey image to Monday.com")
-                                logging.info("Successfully uploaded survey image to Monday.com")
-
-                        except Exception as image_upload_error:
-                            print(f"Exception when uploading image to Monday.com: {str(image_upload_error)}")
-                            logging.error(f"Exception when uploading image to Monday.com: {str(image_upload_error)}")
-                    else:
-                        print("Survey image generation returned empty data")
-                        logging.error("Survey image generation returned empty data")
-
-                except Exception as image_error:
-                    print(f"Error generating survey image: {str(image_error)}")
-                    logging.error(f"Error generating survey image: {str(image_error)}")
-                    import traceback
-                    traceback.print_exc()
                 else:
                     print("PDF generation returned empty data")
                     logging.error("PDF generation returned empty data")
