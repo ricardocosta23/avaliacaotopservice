@@ -48,13 +48,29 @@ def create_survey_image(survey_data, survey_url):
             # Fallback to white background
             img = Image.new('RGB', (img_size, img_size), color='white')
 
-        # Generate and add QR code (centered)
-        qr_img = generate_qr_code_image(survey_url, 400)  # Larger QR code
+        # Generate and add QR code
+        # Increased QR code size to 700 and adjusted its generation size
+        qr_code_display_size = 700 
+        qr_img = generate_qr_code_image(survey_url, qr_code_display_size)
         if qr_img:
-            # Center the QR code
-            qr_x = (img_size - 500) // 2
-            qr_y = (img_size - 500) // 2
+            # Center the QR code based on its new display size
+            qr_x = (img_size - qr_code_display_size) // 2
+            qr_y = (img_size - qr_code_display_size) // 2
             img.paste(qr_img, (qr_x, qr_y))
+        else:
+            # If QR code generation fails, add placeholder text
+            draw = ImageDraw.Draw(img) # Initialize draw object if not already
+            try:
+                placeholder_font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", 40)
+            except:
+                placeholder_font = ImageFont.load_default()
+            placeholder_text = "QR Code não pôde ser gerado"
+            placeholder_bbox = draw.textbbox((0, 0), placeholder_text, font=placeholder_font)
+            placeholder_width = placeholder_bbox[2] - placeholder_bbox[0]
+            placeholder_x = (img_size - placeholder_width) // 2
+            # Center vertically as well
+            placeholder_y = (img_size - (placeholder_bbox[3] - placeholder_bbox[1])) // 2
+            draw.text((placeholder_x, placeholder_y), placeholder_text, fill=(100, 100, 100), font=placeholder_font)
 
         # Convert to bytes
         img_buffer = BytesIO()
