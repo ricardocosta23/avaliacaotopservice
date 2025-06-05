@@ -47,13 +47,13 @@ def create_survey_image(survey_data, survey_url):
             # Try to load a system font
             title_font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", 36)
             subtitle_font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", 24)
-            text_font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf", 20)
+            text_font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf", 28)  # Increased from 20 to 28
         except:
             try:
                 # Fallback fonts
                 title_font = ImageFont.truetype("arial.ttf", 36)
                 subtitle_font = ImageFont.truetype("arial.ttf", 24)
-                text_font = ImageFont.truetype("arial.ttf", 20)
+                text_font = ImageFont.truetype("arial.ttf", 28)  # Increased from 20 to 28
             except:
                 # Use default font if no system fonts available
                 title_font = ImageFont.load_default()
@@ -61,7 +61,7 @@ def create_survey_image(survey_data, survey_url):
                 text_font = ImageFont.load_default()
         
         # Add company logo if available
-        logo_path = os.path.join('static', 'images', 'company-logo.png')
+        logo_path = os.path.join('static', 'images', 'pdfqr.png')
         y_offset = 30
         
         if os.path.exists(logo_path):
@@ -111,7 +111,7 @@ def create_survey_image(survey_data, survey_url):
             detail_width = detail_bbox[2] - detail_bbox[0]
             detail_x = (img_size - detail_width) // 2
             draw.text((detail_x, y_offset), detail, fill=text_color, font=text_font)
-            y_offset += 30
+            y_offset += 38  # Increased spacing for larger font
         
         y_offset += 20
         
