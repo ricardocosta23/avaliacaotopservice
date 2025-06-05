@@ -27,7 +27,7 @@ def format_date_portuguese(date_str):
         5: "Maio", 6: "Junho", 7: "Julho", 8: "Agosto",
         9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
     }
-    
+
     try:
         # Try different date formats that might come from Monday.com
         for date_format in ['%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y', '%Y-%m-%d %H:%M:%S']:
@@ -37,10 +37,10 @@ def format_date_portuguese(date_str):
                 return f"{month_name} de {date_obj.year}"
             except ValueError:
                 continue
-        
+
         # If none of the formats work, try to extract year and month from string
         import re
-        
+
         # Look for YYYY-MM pattern
         match = re.search(r'(\d{4})-(\d{1,2})', date_str)
         if match:
@@ -48,7 +48,7 @@ def format_date_portuguese(date_str):
             month = int(match.group(2))
             month_name = months_pt.get(month, "")
             return f"{month_name} de {year}"
-        
+
         # Look for MM/YYYY or MM-YYYY pattern
         match = re.search(r'(\d{1,2})[/-](\d{4})', date_str)
         if match:
@@ -56,9 +56,9 @@ def format_date_portuguese(date_str):
             year = int(match.group(2))
             month_name = months_pt.get(month, "")
             return f"{month_name} de {year}"
-            
+
         return date_str  # Return original if can't parse
-        
+
     except Exception as e:
         print(f"Error formatting date '{date_str}': {e}")
         return date_str
@@ -109,15 +109,15 @@ def reconstruct_survey_from_monday(pulse_id):
     try:
         # Fetch item data from Monday.com
         item_data_response = get_item_data(pulse_id)
-        
+
         if 'errors' in item_data_response:
             print(f"GraphQL error: {item_data_response['errors']}")
             return None
-            
+
         items = item_data_response.get('data', {}).get('items', [])
         if not items:
             return None
-            
+
         item = items[0]
         trip_name = item.get('name', 'Unknown Trip')
         column_values = item.get('column_values', [])
@@ -204,7 +204,7 @@ def reconstruct_survey_from_monday(pulse_id):
             'board_relation_value': board_relation_value,
             'lookup_mkrkwqep_value': lookup_mkrkwqep_value
         }
-        
+
     except Exception as e:
         print(f"Error reconstructing survey from Monday.com: {str(e)}")
         return None
@@ -236,12 +236,12 @@ def update_survey_link(item_id, survey_url):
 
 def upload_file_to_monday(item_id, file_path, column_id="file_mkrk1fcz"):
     """Upload file to Monday.com file column"""
-    
+
     upload_url = "https://api.monday.com/v2/file"
     headers = {
         "Authorization": f"Bearer {MONDAY_TOKEN}"
     }
-    
+
     try:
         with open(file_path, 'rb') as file_content:
             # Prepare the multipart form data
@@ -250,17 +250,17 @@ def upload_file_to_monday(item_id, file_path, column_id="file_mkrk1fcz"):
                 'map': (None, '{"1": ["variables.file"]}'),
                 '1': (os.path.basename(file_path), file_content, 'application/pdf')
             }
-            
+
             response = requests.post(upload_url, headers=headers, files=files)
             result = response.json()
-            
+
             # Check for errors in response
             if response.status_code != 200:
                 print(f"HTTP Error {response.status_code}: {response.text}")
                 return {"errors": [f"HTTP {response.status_code}: {response.text}"]}
-                
+
             return result
-            
+
     except Exception as e:
         print(f"Error uploading file to Monday.com: {str(e)}")
         return {"errors": [str(e)]}
@@ -279,17 +279,22 @@ def update_board_with_lookup_value(item_name, lookup_value):
         }
     }
     """
+    print(f"=== BOARD 197599163 UPDATE DEBUG ===")
+    print(f"Function called with item_name: '{item_name}'")
+    print(f"Function called with lookup_value: '{lookup_value}'")
+    print(f"lookup_value type: {type(lookup_value)}")
+    print(f"lookup_value is None: {lookup_value is None}")
+    print(f"lookup_value is empty string: {lookup_value == ''}")
 
     # Build column values with lookup_mkrkwqep value
     column_values = {}
-    
-    if lookup_value:
-        column_values["text_mkrkqj1g"] = lookup_value
-        print(f"=== BOARD 197599163 UPDATE DEBUG ===")
-        print(f"Item name: {item_name}")
-        print(f"Lookup value: {lookup_value}")
-        print(f"Column values JSON: {json.dumps(column_values)}")
-        print(f"=== END BOARD UPDATE DEBUG ===")
+
+    if lookup_value and str(lookup_value).strip():
+        column_values["text_mkrkqj1g"] = str(lookup_value).strip()
+        print(f"Added to column_values: {column_values}")
+    else:
+        print(f"lookup_value is empty or None, creating item without lookup value")
+        # Continue with empty column_values - don't return early
 
     variables = {
         "boardId": "197599163",
@@ -323,13 +328,13 @@ def create_survey_result_item(survey_data):
     # Original Monday.com data
     if survey_data.get('company_name'):
         column_values["text_mkrjdnry"] = survey_data['company_name']
-    
+
     if survey_data.get('location'):
         column_values["text_mkrb17ct"] = survey_data['location']
-    
+
     if survey_data.get('original_date'):
         column_values["date_mkrjxb5d"] = survey_data['original_date']
-    
+
     if survey_data.get('board_relation_value'):
         column_values["text_mkrb96zz"] = survey_data['board_relation_value']
 
@@ -387,7 +392,7 @@ def create_survey_result_item(survey_data):
 
     # Use trip name as item name
     item_name = survey_data.get('trip_name', 'Nova avaliação')
-    
+
     variables = {
         "boardId": "9242892489",
         "itemName": item_name,
@@ -542,7 +547,7 @@ def monday_webhook():
                     # Use formatted date if available, otherwise fallback to original date
                     if formatted_date != "Data não disponível":
                         date = formatted_date
-                    
+
                     print(f"Extracted - Location: {location}, Date: {date}, Company: {company_name}")
                     print(f"Hotels - Hotel 1: {hotel_1}, Hotel 2: {hotel_2}")
                     print(f"Has guides: {has_guides}")
@@ -597,20 +602,20 @@ def monday_webhook():
             try:
                 print("Starting PDF generation...")
                 pdf_data = create_survey_pdf(survey_data, survey_url)
-                
+
                 if pdf_data and len(pdf_data) > 0:
                     print(f"PDF generated successfully, size: {len(pdf_data)} bytes")
-                    
+
                     # For Vercel serverless, use /tmp directory for temporary files
                     import tempfile
-                    
+
                     # Create temporary file for PDF
                     with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_pdf:
                         temp_pdf.write(pdf_data)
                         temp_pdf_path = temp_pdf.name
-                    
+
                     print(f"PDF saved to temporary path: {temp_pdf_path}")
-                    
+
                     # Upload PDF to Monday.com file column
                     try:
                         upload_result = upload_file_to_monday(pulse_id, temp_pdf_path)
@@ -620,7 +625,7 @@ def monday_webhook():
                         else:
                             print("Successfully uploaded PDF to Monday.com")
                             logging.info("Successfully uploaded PDF to Monday.com")
-                            
+
                     except Exception as upload_error:
                         print(f"Exception when uploading PDF to Monday.com: {str(upload_error)}")
                         logging.error(f"Exception when uploading PDF to Monday.com: {str(upload_error)}")
@@ -634,7 +639,7 @@ def monday_webhook():
                 else:
                     print("PDF generation returned empty data")
                     logging.error("PDF generation returned empty data")
-                
+
             except Exception as pdf_error:
                 print(f"Error generating PDF: {str(pdf_error)}")
                 logging.error(f"Error generating PDF: {str(pdf_error)}")
@@ -672,7 +677,7 @@ def survey_form(survey_id):
     # Clear any existing flash messages when accessing the survey form
     from flask import session
     session.pop('_flashes', None)
-    
+
     survey = get_survey(survey_id)
 
     # If not found in storage, try to reconstruct from Monday.com
@@ -684,7 +689,7 @@ def survey_form(survey_id):
             if survey:
                 # Save reconstructed survey to memory for future requests
                 save_survey(survey_id, survey)
-        
+
         # Handle legacy monday_ prefix format for backwards compatibility
         elif survey_id.startswith('monday_'):
             pulse_id = survey_id.replace('monday_', '')
@@ -712,7 +717,7 @@ def submit_survey(survey_id):
             if survey:
                 # Save reconstructed survey to memory for future requests
                 save_survey(survey_id, survey)
-        
+
         # Handle legacy monday_ prefix format for backwards compatibility
         elif survey_id.startswith('monday_'):
             pulse_id = survey_id.replace('monday_', '')
@@ -732,19 +737,19 @@ def submit_survey(survey_id):
         # Get optional ratings and convert to int if not empty
         air_rating = request.form.get('air_rating')
         air_rating = int(air_rating) if air_rating and air_rating.strip() else None
-        
+
         guides_rating = request.form.get('guides_rating')
         guides_rating = int(guides_rating) if guides_rating and guides_rating.strip() else None
-        
+
         hotel_1_rating = request.form.get('hotel_1_rating')
         hotel_1_rating = int(hotel_1_rating) if hotel_1_rating and hotel_1_rating.strip() else None
-        
+
         hotel_2_rating = request.form.get('hotel_2_rating')
         hotel_2_rating = int(hotel_2_rating) if hotel_2_rating and hotel_2_rating.strip() else None
-        
+
         restaurants_rating = request.form.get('restaurants_rating')
         restaurants_rating = int(restaurants_rating) if restaurants_rating and restaurants_rating.strip() else None
-        
+
         activities_rating = request.form.get('activities_rating')
         activities_rating = int(activities_rating) if activities_rating and activities_rating.strip() else None
 
@@ -821,7 +826,7 @@ def submit_survey(survey_id):
         else:
             created_item = monday_result.get('data', {}).get('create_item', {})
             print(f"Successfully created Monday.com item: {created_item.get('id')}")
-            
+
             # Update board 197599163 with lookup_mkrkwqep value if available
             lookup_value = survey_data.get('lookup_mkrkwqep_value')
             if lookup_value:
@@ -841,7 +846,7 @@ def submit_survey(survey_id):
                 print("No lookup_mkrkwqep_value found in survey_data")
                 print(f"Available survey_data keys: {list(survey_data.keys())}")
                 print(f"Original survey lookup_mkrkwqep_value: {survey.get('lookup_mkrkwqep_value')}")
-            
+
             # Increment submission count
             increment_submission_count(survey_id)
 
@@ -893,7 +898,7 @@ def thank_you(survey_id):
             if survey:
                 # Save reconstructed survey to memory for future requests
                 save_survey(survey_id, survey)
-        
+
         # Handle legacy monday_ prefix format for backwards compatibility
         elif survey_id.startswith('monday_'):
             pulse_id = survey_id.replace('monday_', '')
@@ -909,19 +914,19 @@ def thank_you(survey_id):
 def download_pdf(survey_id):
     """Download the PDF with QR code for the survey"""
     survey = get_survey(survey_id)
-    
+
     if not survey:
         return "Pesquisa não encontrada", 404
-    
+
     # Always generate PDF on-the-fly since local files are deleted after upload to Monday.com
     try:
         survey_url = url_for('survey_form', survey_id=survey_id, _external=True)
         pdf_data = create_survey_pdf(survey, survey_url)
-        
+
         # Return PDF directly from memory
         pdf_buffer = BytesIO(pdf_data)
         pdf_buffer.seek(0)
-        
+
         return send_file(
             pdf_buffer,
             mimetype='application/pdf',
@@ -995,7 +1000,7 @@ def index():
 def list_surveys():
     """List all surveys"""
     surveys = get_all_surveys()
-    
+
     html = """
     <html>
     <head>
@@ -1050,7 +1055,7 @@ def list_surveys():
         <div class="container">
             <h1>📋 Todas as Pesquisas Criadas</h1>
     """
-    
+
     for survey in surveys:
         html += f"""
             <div class="survey-card">
@@ -1068,7 +1073,7 @@ def list_surveys():
                 </div>
             </div>
         """
-    
+
     html += """
             <div style="text-align: center; margin-top: 30px;">
                 <a href="/" class="btn">Voltar ao Início</a>
@@ -1077,7 +1082,7 @@ def list_surveys():
     </body>
     </html>
     """
-    
+
     return html
 
 @app.route('/favicon.ico')
